@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Профиль пользователя</title>
+    <style>
+        body {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            min-height: 100vh;
+        }
+
+        .profile-container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+
+        .profile-sidebar {
+            background: #2d2d2d;
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid #404040;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            height: fit-content;
+        }
+
+        .profile-main {
+            background: #2d2d2d;
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid #404040;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .avatar-section {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 4px solid #007bff;
+            object-fit: cover;
+            margin: 0 auto 15px;
+            display: block;
+        }
+
+        .edit-avatar-btn {
+            position: absolute;
+            bottom: 10px;
+            right: calc(50% - 75px);
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .user-info {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .username {
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .user-role {
+            color: #007bff;
+            font-size: 14px;
+            background: rgba(0, 123, 255, 0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .stat-item {
+            background: #3a3a3a;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #555;
+        }
+
+        .stat-value {
+            color: #007bff;
+            font-size: 20px;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            color: #ccc;
+            font-size: 12px;
+        }
+
+        .info-item {
+            background: #3a3a3a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #007bff;
+        }
+
+        .info-label {
+            color: #ccc;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #404040;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .section-title-text {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .edit-btn {
+            background: #007bff;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .edit-btn:hover {
+            background: #0056b3;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            width: 94%;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #555;
+            background: #3a3a3a;
+            color: #fff;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+
+        input:disabled {
+            background: #2d2d2d;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+        }
+
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-upload-btn {
+            background: #3a3a3a;
+            border: 1px dashed #555;
+            color: #ccc;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .file-upload-btn:hover {
+            border-color: #007bff;
+            color: #007bff;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            height: 100%;
+        }
+
+        /* СТИЛИ ДЛЯ СООБЩЕНИЙ */
+        .messages {
+            margin: 20px 0;
+        }
+
+        .message {
+            background: #3a3a3a;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #007bff;
+        }
+
+        .message.error {
+            border-left-color: #dc3545;
+            background: rgba(220, 53, 69, 0.1);
+        }
+
+        .message.success {
+            border-left-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+        }
+
+        .back-link {
+            color: #007bff;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .back-link:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+
+        .edit-form {
+            display: none;
+            background: #3a3a3a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border: 1px solid #555;
+        }
+
+        .edit-form.active {
+            display: block;
+        }
+
+        .form-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .profile-container {
+                grid-template-columns: 1fr;
+            }
+
+            body {
+                padding: 20px;
+            }
+
+            .form-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+        .profile-sidebar {
+    grid-column: 1;
+    grid-row: 1;
+}
+        .profile-main {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+}
+.profile-container {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: auto auto;
+    gap: 10px 30px;
+}
+
+.btn-2{            background: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width:107%;}
+.history-section {
+    grid-column: 1;
+    grid-row: 2;
+    width: 280px;
+    text-align: center;
+}
+
+.history-btn {
+    background: #28a745;
+    color: white;
+    padding: 15px 30px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    display: inline-block;
+    font-size: 16px;
+}
+
+.history-btn:hover {
+    background: #218838;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+    </style>
+
+</head>
+<body>
+    <div class="profile-container">
+        <!-- Боковая панель с информацией -->
+        <div class="profile-sidebar">
+            <div class="avatar-section">
+                {% if user.avatar %}
+                    <img src="{{ user.avatar.url }}" alt="Avatar" class="avatar">
+                {% else %}
+                    <img src="/static/default-avatar.png" alt="Avatar" class="avatar">
+                {% endif %}
+                <button class="edit-avatar-btn" onclick="openEditSection('avatar')">✏️</button>
+            </div>
+
+            <div class="user-info">
+                <div class="username">{{ user.username }}</div>
+                <div class="user-role">{{ user.get_role_display }}</div>
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-value">12</span>
+                    <span class="stat-label">Бронирований</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">85%</span>
+                    <span class="stat-label">Активность</span>
+                </div>
+            </div>
+            <!-- ДОБАВЬ ЭТОТ БЛОК СЮДА -->
+            <div class="user-details">
+                <div style="margin-bottom: 15px;">
+                    <strong>📧 Email:</strong><br>
+                    {{ user.email|default:"Не указан" }}
+                </div>
+                {% if user.phone %}
+                <div style="margin-bottom: 15px;">
+                    <strong>📞 Телефон:</strong><br>
+                    {{ user.phone }}
+                </div>
+                {% endif %}
+            </div>
+             <!-- КОНТЕЙНЕР ДЛЯ КНОПОК -->
+                    <a href="{% url 'home' %}" class="back-link">
+                                    ← Назад на главную
+                    </a>
+
+        </div>
+<div class="history-section">
+    <button class="history-btn" onclick="showHistory()">
+        📅 История бронирования
+    </button>
+</div>
+        <!-- Основное содержимое -->
+        <div class="profile-main">
+            <!-- Основная информация (только просмотр) -->
+            <div class="section">
+                <div class="section-title">
+                    <div class="section-title-text">
+                        <i>👤</i> Основная информация
+                    </div>
+                    <button class="edit-btn" onclick="openEditSection('profile')">
+                        ✏️ Редактировать
+                    </button>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">Имя пользователя</div>
+                    <div class="info-value">{{ user.username }}</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">Email</div>
+                    <div class="info-value">{{ user.email|default:"Не указан" }}</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">Роль</div>
+                    <div class="info-value">{{ user.get_role_display }}</div>
+                </div>
+
+                {% if user.phone %}
+                <div class="info-item">
+                    <div class="info-label">Телефон</div>
+                    <div class="info-value">{{ user.phone }}</div>
+                </div>
+                {% endif %}
+            </div>
+<!-- ★★★ ВСТАВЬ ЗДЕСЬ ФОРМУ АВАТАРКИ ★★★ -->
+<div class="edit-form" id="editAvatarForm">
+    <div class="section-title">
+        <div class="section-title-text">
+            <i>🖼️</i> Смена аватарки
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" action="{% url 'update_avatar' %}">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label>Выберите новую аватарку:</label>
+            <div class="file-upload">
+                <div class="file-upload-btn">
+                    📁 Выберите файл
+                    <input type="file" name="avatar" accept="image/*">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" class="btn btn-cancel" onclick="closeEditSection('avatar')">
+                ❌ Отмена
+            </button>
+            <button type="submit" class="btn btn-success">
+                💾 Сохранить аватарку
+            </button>
+        </div>
+    </form>
+</div>
+            <!-- Форма редактирования профиля (скрыта по умолчанию) -->
+<div class="section">
+    <div class="edit-form" id="editProfileForm">
+        <div class="section-title">
+            <div class="section-title-text">
+                <i>✏️</i> Редактирование профиля
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" action="{% url 'update_profile' %}">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label>Имя пользователя:</label>
+                <input type="text" name="username" value="{{ user.username }}" required>
+                <small style="color: #999; font-size: 12px;">Можно изменить, если имя не занято</small>
+            </div>
+
+            <!-- ★★★ УДАЛИЛ поле email отсюда ★★★ -->
+
+            <div class="form-group">
+                <label>Телефон:</label>
+                <input type="text" name="phone" value="{{ user.phone|default:'' }}" placeholder="+7 (XXX) XXX-XX-XX">
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-cancel" onclick="closeEditSection('profile')">
+                    ❌ Отмена
+                </button>
+                <button type="submit" class="btn btn-success">
+                    💾 Сохранить изменения
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ★★★ ДОБАВЬ ЭТУ НОВУЮ СЕКЦИЮ ДЛЯ ПОДТВЕРЖДЕНИЯ EMAIL ★★★ -->
+<div class="section">
+    <div class="section-title">
+        <div class="section-title-text">
+            <i>📧</i> Подтверждение email
+        </div>
+    </div>
+
+    <div class="info-item">
+        <div class="info-label">Текущий email</div>
+        <div class="info-value">
+            {% if user.email %}
+                {{ user.email }}
+                {% with confirmation=user.email_confirmations.last %}
+                    {% if confirmation and confirmation.confirmed_at %}
+                        <br><small style="color: #28a745;">✅ Подтвержден</small>
+                    {% else %}
+                        <br><small style="color: #dc3545;">❌ Не подтвержден</small>
+                    {% endif %}
+                {% endwith %}
+            {% else %}
+                Не указан
+            {% endif %}
+        </div>
+    </div>
+
+    <form method="post" action="{% url 'verify_email' %}">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label>Новый email:</label>
+            <input type="email" name="email" placeholder="Введите новый email"
+                   value="{{ request.session.pending_email|default:'' }}">
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn-2" name="send_code">
+                📧 Отправить код подтверждения
+            </button>
+        </div>
+
+        <div class="form-group" id="codeGroup"
+             {% if request.session.pending_email %}style="display: block;"{% else %}style="display: none;"{% endif %}>
+            <label>Код подтверждения:</label>
+            <input type="text" name="confirmation_code" maxlength="6" placeholder="Введите 6 цифр из письма">
+        </div>
+
+        {% if request.session.pending_email %}
+        <div class="form-group">
+            <button type="submit" class="btn btn-success">
+                ✅ Подтвердить email
+            </button>
+        </div>
+        {% endif %}
+    </form>
+</div>
+            <!-- Безопасность -->
+            <div class="section">
+                <div class="section-title">
+                    <div class="section-title-text">
+                        <i>🔒</i> Безопасность
+                    </div>
+                    <button class="edit-btn" onclick="openEditSection('password')">
+                        🔑 Сменить пароль
+                    </button>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">Статус аккаунта</div>
+                    <div class="info-value">🟢 Активен</div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">Последний вход</div>
+                    <div class="info-value">Сегодня в 14:30</div>
+                </div>
+
+                <!-- Сообщения -->
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="message {% if 'error' in message.tags %}error{% elif 'success' in message.tags %}success{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Форма смены пароля (скрыта по умолчанию) -->
+                <div class="edit-form" id="editPasswordForm">
+                    <div class="section-title">
+                        <div class="section-title-text">
+                            <i>🔑</i> Смена пароля
+                        </div>
+                    </div>
+
+                    <form method="post" action="{% url 'change_password' %}">
+                        {% csrf_token %}
+
+                        <div class="form-group">
+                            <label>Старый пароль:</label>
+                            <input type="password" name="old_password" required placeholder="Введите текущий пароль">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Новый пароль:</label>
+                            <input type="password" name="new_password" required placeholder="Введите новый пароль">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Подтвердите новый пароль:</label>
+                            <input type="password" name="confirm_password" required placeholder="Повторите новый пароль">
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-cancel" onclick="closeEditSection('password')">
+                                ❌ Отмена
+                            </button>
+                            <button type="submit" class="btn btn-success">
+                                🔒 Изменить пароль
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <script>
+
+
+        function openEditSection(section) {
+    // Сначала закрываем все формы редактирования
+    closeAllEditSections();
+
+    function showHistory() {
+        alert("📅 Функция 'История бронирования' будет добавлена позже!");
+        // Здесь потом будет переход на страницу истории
+    }
+
+    // Открываем нужную форму
+    if (section === 'profile') {
+        document.getElementById('editProfileForm').classList.add('active');
+    } else if (section === 'password') {
+        document.getElementById('editPasswordForm').classList.add('active');
+    } else if (section === 'avatar') {
+        document.getElementById('editAvatarForm').classList.add('active');
+    }
+}
+
+function closeEditSection(section) {
+    if (section === 'profile') {
+        document.getElementById('editProfileForm').classList.remove('active');
+    } else if (section === 'password') {
+        document.getElementById('editPasswordForm').classList.remove('active');
+    } else if (section === 'avatar') {
+        document.getElementById('editAvatarForm').classList.remove('active');
+    }
+}
+
+function closeAllEditSections() {
+    document.getElementById('editProfileForm').classList.remove('active');
+    document.getElementById('editPasswordForm').classList.remove('active');
+    document.getElementById('editAvatarForm').classList.remove('active');
+}
+
+// Автоматически открываем форму если есть сообщения об ошибках
+document.addEventListener('DOMContentLoaded', function() {
+    const messages = document.querySelectorAll('.message.error');
+    if (messages.length > 0) {
+        const errorText = messages[0].textContent.toLowerCase();
+        if (errorText.includes('пароль')) {
+            openEditSection('password');
+        } else if (errorText.includes('аватар') || errorText.includes('avatar')) {
+            openEditSection('avatar');
+        } else {
+            openEditSection('profile');
+        }
+    }
+});
+
+// ★★★★ ВСТАВЬ ЭТО В САМЫЙ КОНЕЦ ★★★★
+// Показываем поле для кода если email не подтвержден
+
+// Показываем поле для кода при изменении email
+document.addEventListener('DOMContentLoaded', function() {
+    const emailField = document.querySelector('input[name="email"]');
+    const codeGroup = document.getElementById('confirmationCodeGroup');
+
+    // Всегда показываем поле для кода (упростим логику)
+    if (codeGroup) {
+        codeGroup.style.display = 'block';
+    }
+
+    // Показываем поле при изменении email
+    if (emailField && codeGroup) {
+        emailField.addEventListener('input', function() {
+            codeGroup.style.display = 'block';
+        });
+    }
+});
+
+    </script>
+</body>
+</html>

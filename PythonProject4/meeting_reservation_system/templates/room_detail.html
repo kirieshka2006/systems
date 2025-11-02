@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ room.name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: #2d2d2d;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            border: 1px solid #404040;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-back {
+            background: #6c757d;
+        }
+        .btn-back:hover {
+            background: #5a6268;
+        }
+        .btn-book {
+            background: #28a745;
+            font-weight: bold;
+        }
+        .btn-book:hover {
+            background: #218838;
+        }
+        h1 {
+            color: #ffffff;
+            border-bottom: 2px solid #404040;
+            padding-bottom: 15px;
+        }
+
+        /* Стили для подсказок */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            margin-left: 5px;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 180px;
+            background: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -90px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .room-info {
+            background: #3a3a3a;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid #555;
+        }
+        .info-item {
+            margin: 15px 0;
+            padding: 10px;
+            background: #2d2d2d;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            🚪 {{ room.name }}
+            <span class="tooltip">
+                ℹ️
+                <span class="tooltiptext">Детальная информация о переговорной комнате</span>
+            </span>
+        </h1>
+
+        <div class="room-info">
+            <div class="info-item">
+                <strong>📍 Местоположение:</strong> {{ room.location }}
+                <span class="tooltip">
+                    (?)
+                    <span class="tooltiptext">Где находится эта комната в здании</span>
+                </span>
+            </div>
+
+            <div class="info-item">
+                <strong>👥 Вместимость:</strong> {{ room.capacity }} человек
+                <span class="tooltip">
+                    (?)
+                    <span class="tooltiptext">Максимальное количество людей</span>
+                </span>
+            </div>
+
+            <div class="info-item">
+                <strong>🛠 Оборудование:</strong> {{ room.equipment }}
+                <span class="tooltip">
+                    (?)
+                    <span class="tooltiptext">Что есть в комнате для проведения встреч</span>
+                </span>
+            </div>
+
+            <div class="info-item">
+                <strong>💰 Цена:</strong> {{ room.price_per_hour }} руб/час
+                <span class="tooltip">
+                    (?)
+                    <span class="tooltiptext">Стоимость аренды за один час</span>
+                </span>
+            </div>
+        </div>
+
+        <div class="actions">
+            {% if user.is_authenticated %}
+                <button class="btn btn-book">
+                    📅 Забронировать эту комнату
+                    <span class="tooltip">
+                        (?)
+                        <span class="tooltiptext">Выбрать дату и время для бронирования</span>
+                    </span>
+                </button>
+            {% else %}
+                <div style="background: #dc3545; padding: 15px; border-radius: 8px; text-align: center;">
+                    ❌ <a href="{% url 'login' %}" style="color: white; text-decoration: underline;">Войдите в систему</a> чтобы забронировать комнату
+                    <span class="tooltip">
+                        (?)
+                        <span class="tooltiptext">Требуется авторизация для бронирования</span>
+                    </span>
+                </div>
+            {% endif %}
+            <a href="{% url 'home' %}" class="btn btn-back">← Назад к списку комнат</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Регистрация</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: #2d2d2d;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 450px;
+            border: 1px solid #404040;
+        }
+        h2 {
+            text-align: center;
+            color: #ffffff;
+            margin-bottom: 30px;
+        }
+
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #cccccc;
+        }
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            background: #3a3a3a;
+            border: 1px solid #555;
+            border-radius: 8px;
+            box-sizing: border-box;
+            color: #ffffff;
+            font-size: 16px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 14px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            width: 100%;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 25px;
+            color: #999;
+        }
+        .login-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* Стили для подсказок ошибок */
+        .error-tooltip {
+            display: none;
+            background: #dc3545;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 5px;
+            font-size: 12px;
+            border: 1px solid #ff6b6b;
+        }
+        .error-tooltip.show {
+            display: block;
+        }
+
+        .password-rules {
+            background: #3a3a3a;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 12px;
+            color: #aaa;
+            border: 1px solid #555;
+            display: none;
+        }
+        .password-rules.show {
+            display: block;
+        }
+
+        .rule {
+            margin: 5px 0;
+            transition: color 0.3s;
+        }
+        .rule.valid {
+            color: #28a745;
+        }
+        .rule.invalid {
+            color: #dc3545;
+        }
+
+        /* Убрал красную обводку при ошибке, оставил только стандартную */
+        input.error {
+            border-color: #555; /* Оставляем стандартный цвет */
+        }
+        input.valid {
+            border-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📝 Создать аккаунт</h2>
+        {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}" style="
+                padding: 10px;
+                border-radius: 5px;
+                margin-bottom: 15px;
+                {% if message.tags == 'success' %}background: #28a745;{% endif %}
+                {% if message.tags == 'error' %}background: #dc3545;{% endif %}
+                color: white;
+                text-align: center;
+            ">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+        <form method="post" id="registerForm">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="id_username">Имя пользователя:</label>
+                <input type="text" name="username" id="id_username" required
+                       placeholder="Придумайте логин">
+                <div class="error-tooltip" id="usernameError">
+                    Обязательное поле. Не более 150 символов. Только буквы, цифры и @/./+/-/_
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_password1">Пароль:</label>
+                <input type="password" name="password1" id="id_password1" required
+                       placeholder="Придумайте пароль">
+                <div class="password-rules" id="passwordRules">
+                    <strong>Требования к паролю:</strong>
+                    <div class="rule" id="ruleLength">• Не менее 8 символов</div>
+                    <div class="rule" id="ruleCommon">• Не слишком простой пароль</div>
+                    <div class="rule" id="ruleNumeric">• Не только цифры</div>
+                    <div class="rule" id="ruleSimilar">• Не похож на логин</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_password2">Подтверждение пароля:</label>
+                <input type="password" name="password2" id="id_password2" required
+                       placeholder="Повторите пароль">
+                <div class="error-tooltip" id="passwordMatchError">
+                    Пароли не совпадают
+                </div>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn">Создать аккаунт</button>
+        </form>
+
+        <div class="login-link">
+            <p>Уже есть аккаунт? <a href="{% url 'login' %}">Войти в систему</a></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const usernameInput = document.getElementById('id_username');
+            const password1Input = document.getElementById('id_password1');
+            const password2Input = document.getElementById('id_password2');
+            const usernameError = document.getElementById('usernameError');
+            const passwordMatchError = document.getElementById('passwordMatchError');
+            const passwordRules = document.getElementById('passwordRules');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Правила для пароля
+            const ruleLength = document.getElementById('ruleLength');
+            const ruleCommon = document.getElementById('ruleCommon');
+            const ruleNumeric = document.getElementById('ruleNumeric');
+            const ruleSimilar = document.getElementById('ruleSimilar');
+
+            function validateUsername() {
+                const username = usernameInput.value;
+                if (username.length === 0) {
+                    usernameError.textContent = 'Обязательное поле';
+                    usernameError.classList.add('show');
+                    usernameInput.classList.add('error');
+                    return false;
+                } else if (username.length > 150) {
+                    usernameError.textContent = 'Не более 150 символов';
+                    usernameError.classList.add('show');
+                    usernameInput.classList.add('error');
+                    return false;
+                } else if (!/^[\w.@+-]+$/.test(username)) {
+                    usernameError.textContent = 'Только буквы, цифры и @/./+/-/_';
+                    usernameError.classList.add('show');
+                    usernameInput.classList.add('error');
+                    return false;
+                } else {
+                    usernameError.classList.remove('show');
+                    usernameInput.classList.remove('error');
+                    return true;
+                }
+            }
+
+            function validatePassword() {
+                const password = password1Input.value;
+                let isValid = true;
+
+                // Проверка длины
+                if (password.length >= 8) {
+                    ruleLength.classList.add('valid');
+                    ruleLength.classList.remove('invalid');
+                } else {
+                    ruleLength.classList.add('invalid');
+                    ruleLength.classList.remove('valid');
+                    isValid = false;
+                }
+
+                // Проверка на простой пароль
+                const commonPasswords = ['123456', 'password', 'qwerty', '12345678'];
+                if (!commonPasswords.includes(password.toLowerCase())) {
+                    ruleCommon.classList.add('valid');
+                    ruleCommon.classList.remove('invalid');
+                } else {
+                    ruleCommon.classList.add('invalid');
+                    ruleCommon.classList.remove('valid');
+                    isValid = false;
+                }
+
+                // Проверка на только цифры
+                if (!/^\d+$/.test(password)) {
+                    ruleNumeric.classList.add('valid');
+                    ruleNumeric.classList.remove('invalid');
+                } else {
+                    ruleNumeric.classList.add('invalid');
+                    ruleNumeric.classList.remove('valid');
+                    isValid = false;
+                }
+
+                // Проверка на схожесть с логином
+                if (password.toLowerCase() !== usernameInput.value.toLowerCase()) {
+                    ruleSimilar.classList.add('valid');
+                    ruleSimilar.classList.remove('invalid');
+                } else {
+                    ruleSimilar.classList.add('invalid');
+                    ruleSimilar.classList.remove('valid');
+                    isValid = false;
+                }
+
+                if (password.length > 0) {
+                    passwordRules.classList.add('show');
+                } else {
+                    passwordRules.classList.remove('show');
+                }
+
+                if (isValid && password.length > 0) {
+                    password1Input.classList.remove('error');
+                } else {
+                    password1Input.classList.add('error');
+                }
+
+                return isValid;
+            }
+
+            function validatePasswordMatch() {
+                const password1 = password1Input.value;
+                const password2 = password2Input.value;
+
+                if (password2.length === 0) {
+                    passwordMatchError.classList.remove('show');
+                    password2Input.classList.remove('error');
+                    return false;
+                } else if (password1 === password2 && password1.length > 0) {
+                    passwordMatchError.classList.remove('show');
+                    password2Input.classList.remove('error');
+                    return true;
+                } else {
+                    passwordMatchError.classList.add('show');
+                    password2Input.classList.add('error');
+                    return false;
+                }
+            }
+
+            function validateForm() {
+                const isUsernameValid = validateUsername();
+                const isPasswordValid = validatePassword();
+                const isPasswordMatchValid = validatePasswordMatch();
+
+                submitBtn.disabled = !(isUsernameValid && isPasswordValid && isPasswordMatchValid);
+            }
+
+            // Слушатели событий
+            usernameInput.addEventListener('input', validateForm);
+            password1Input.addEventListener('input', validateForm);
+            password2Input.addEventListener('input', validateForm);
+
+            // Изначальная валидация
+            validateForm();
+        });
+    </script>
+</body>
+</html>
