@@ -12,6 +12,15 @@ from django.utils import timezone
 
 def login_view(request):
     """Вход в систему (ТОЛЬКО вход)"""
+    success_message = request.session.pop('recovery_success_message', None)
+    if success_message:
+        messages.success(request, success_message)
+
+    # ★★★ УБЕРИ ЭТУ ОТЛАДКУ - ОНА ОЧИЩАЕТ СООБЩЕНИЯ! ★★★
+    # storage = messages.get_messages(request)
+    # for message in storage:
+    #     print(f"DEBUG: Сообщение в login - '{message}', тег: '{message.tags}'")
+
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -38,11 +47,11 @@ def recovery_view(request):
     """Страница восстановления пароля"""
     if request.method == 'POST':
         form_type = request.POST.get('form_type', 'recovery_email')
-
+        print("DEBUG: recovery_view вызван")
         # ★★★ ОБРАБОТКА ВВОДА EMAIL ★★★
         if form_type == 'recovery_email':
             email = request.POST.get('recovery_email')
-
+            print(f"DEBUG: recovery_email = {email}")
             # Ищем пользователя с email
             try:
                 user = User.objects.get(email=email)
@@ -92,11 +101,11 @@ def handle_password_recovery(request):
     user_id = request.session.get('recovery_user_id')
     email = request.session.get('recovery_email')
 
-    print(f"DEBUG: recovery_code={recovery_code}, user_id={user_id}, email={email}")  # ← ДОБАВЬ
+    print(f"DEBUG: recovery_code={recovery_code}, user_id={user_id}, email={email}")
 
     if not user_id or not email:
         messages.error(request, '❌ Сессия устарела! Начните восстановление заново.')
-        return render(request, 'login.html', {'show_recovery': True})
+        return render(request, 'recovery.html')
 
     try:
         user = User.objects.get(id=user_id)
@@ -109,7 +118,10 @@ def handle_password_recovery(request):
 
         if confirmation.is_expired():
             messages.error(request, '❌ Код устарел! Запросите новый.')
-            return render(request, 'recovery.html', {'show_recovery': True})
+            return render(request, 'recovery.html', {
+                'show_recovery_code': True,
+                'recovery_email': email
+            })
 
         # Проверяем пароли
         if new_password != confirm_password:
@@ -139,9 +151,10 @@ def handle_password_recovery(request):
         del request.session['recovery_email']
         request.session['failed_attempts'] = 0
 
-        print("DEBUG: Пароль успешно изменен, делаем редирект на login")
-        messages.success(request, '✅ Пароль успешно изменен! Теперь войдите с новым паролем.')
-        return redirect('login')
+        print("DEBUG: Пароль успешно изменен, рендерим login.html с сообщением")
+        # ★★★ ПРОСТО РЕНДЕРИМ С СООБЩЕНИЕМ ★★★
+        messages.success(request, ' Пароль успешно изменен! Теперь войдите с новым паролем.')
+        return render(request, 'login.html')
 
     except EmailConfirmation.DoesNotExist:
         messages.error(request, '❌ Неверный код восстановления!')
@@ -149,6 +162,12 @@ def handle_password_recovery(request):
             'show_recovery_code': True,
             'recovery_email': email
         })
+
+def login_success_view(request):
+    """Страница входа с сообщением об успешной смене пароля"""
+    messages.success(request, '✅ Пароль успешно изменен! Теперь войдите с новым паролем.')
+    # ★★★ НЕ ДЕЛАЕМ РЕДИРЕКТ, А РЕНДЕРИМ СТРАНИЦУ ★★★
+    return render(request, 'login.html')
 
 def register(request):
     """Регистрация нового пользователя"""

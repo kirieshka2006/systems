@@ -103,6 +103,15 @@
             margin-bottom: 20px;
             font-size: 14px;
         }
+        .success {
+    background: #28a745;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
     </style>
 </head>
 <body>
@@ -110,14 +119,14 @@
         <h2>🔐 Вход в систему</h2>
 
         {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-                <div class="error">
-                    {{ message }}
-                </div>
-            {% endfor %}
+<div class="messages">
+    {% for message in messages %}
+        <div class="{% if message.tags == 'success' %}success{% elif message.tags == 'error' %}error{% else %}info{% endif %}">
+            {{ message }}
         </div>
-        {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
 
         {% if form.errors %}
         <div class="error">

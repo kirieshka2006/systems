@@ -17,5 +17,6 @@ urlpatterns = [
     path('profile/update_avatar/', views.update_avatar, name='update_avatar'),
     path('profile/verify-email/', views.verify_email, name='verify_email'),
     path('recovery/', views.recovery_view, name='recovery'),
+    path('login/success/', views.login_success_view, name='login_with_success'),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
