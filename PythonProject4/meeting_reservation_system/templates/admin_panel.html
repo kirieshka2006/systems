@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Админ-панель</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .back-btn:hover {
+            background: #5a6268;
+        }
+        .search-box {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .search-filters {
+            display: grid;
+            grid-template-columns: 1fr 200px;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .search-input, .role-select {
+            width: 100%;
+            padding: 12px;
+            background: #3a3a3a;
+            border: 1px solid #555;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+        }
+        .search-input:focus, .role-select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .reset-btn {
+            background: #6c757d;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .reset-btn:hover {
+            background: #5a6268;
+        }
+        .users-table {
+            background: #2d2d2d;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #404040;
+        }
+        th {
+            background: #3a3a3a;
+        }
+        .user-row:hover {
+            background: #3a3a3a;
+        }
+        .no-users {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+        }
+        .role-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .role-admin { background: #dc3545; color: white; }
+        .role-manager { background: #fd7e14; color: white; }
+        .role-user { background: #28a745; color: white; }
+        .view-btn {
+            background: #17a2b8;
+            color: white;
+            padding: 6px 12px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 5px;
+            display: inline-block;
+        }
+        .view-btn:hover {
+            background: #138496;
+        }
+        .role-btn {
+            background: #6c757d;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .role-btn:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-actions">
+            <a href="{% url 'home' %}" class="back-btn">
+                ← Назад на главную
+            </a>
+            <h1>⚙️ Админ-панель</h1>
+            <div style="width: 140px;"></div>
+        </div>
+
+        <!-- ★★★ ПОИСК ПО ЛОГИНУ И РОЛИ ★★★ -->
+        <div class="search-box">
+            <div class="search-filters">
+                <input type="text"
+                       id="searchInput"
+                       class="search-input"
+                       placeholder="🔍 Введите логин для поиска..."
+                       onkeyup="filterUsers()">
+
+                <select id="roleSelect" class="role-select" onchange="filterUsers()">
+                    <option value="">Все роли</option>
+                    <option value="admin">Администратор</option>
+                    <option value="manager">Менеджер</option>
+                    <option value="user">Пользователь</option>
+                </select>
+            </div>
+            <button class="reset-btn" onclick="resetFilters()">🔄 Сбросить фильтры</button>
+        </div>
+
+        <div class="users-table">
+            <h3>👥 Пользователи системы (<span id="usersCount">{{ users.count }}</span>)</h3>
+            <div id="usersTable">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Логин</th>
+                            <th>Email</th>
+                            <th>Роль</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTbody">
+                        {% for user in users %}
+                        <tr class="user-row"
+                            data-username="{{ user.username|lower }}"
+                            data-role="{{ user.role }}">
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email|default:"Не указан" }}</td>
+                            <td>
+                                <span class="role-badge role-{{ user.role }}">
+                                    {{ user.get_role_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'admin_user_profile' user.id %}" class="view-btn">
+                                    👁️ Просмотр
+                                </a>
+                                <button class="role-btn">
+                                    ✏️ Роль
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function filterUsers() {
+            const usernameFilter = document.getElementById('searchInput').value.toLowerCase();
+            const roleFilter = document.getElementById('roleSelect').value;
+            const rows = document.getElementsByClassName('user-row');
+
+            let visibleCount = 0;
+
+            for (let i = 0; i < rows.length; i++) {
+                const username = rows[i].getAttribute('data-username');
+                const role = rows[i].getAttribute('data-role');
+
+                const usernameMatch = username.includes(usernameFilter);
+                const roleMatch = !roleFilter || role === roleFilter;
+
+                if (usernameMatch && roleMatch) {
+                    rows[i].style.display = '';
+                    visibleCount++;
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+
+            // Обновляем счетчик
+            document.getElementById('usersCount').textContent = visibleCount;
+
+            // Сообщение если ничего не найдено
+            showNoResultsMessage(visibleCount === 0 && (usernameFilter || roleFilter));
+        }
+
+        function showNoResultsMessage(show) {
+            let message = document.getElementById('noResultsMessage');
+
+            if (show && !message) {
+                const tbody = document.getElementById('usersTbody');
+                message = document.createElement('tr');
+                message.id = 'noResultsMessage';
+                message.innerHTML = `
+                    <td colspan="4" class="no-users">
+                        ❌ Пользователи не найдены по текущим фильтрам
+                    </td>
+                `;
+                tbody.appendChild(message);
+            } else if (!show && message) {
+                message.remove();
+            }
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('roleSelect').value = '';
+            filterUsers();
+        }
+
+        // ★★★ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ★★★
+        document.addEventListener('DOMContentLoaded', function() {
+            filterUsers();
+        });
+    </script>
+</body>
+</html>

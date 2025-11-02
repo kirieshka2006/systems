@@ -18,5 +18,8 @@ urlpatterns = [
     path('profile/verify-email/', views.verify_email, name='verify_email'),
     path('recovery/', views.recovery_view, name='recovery'),
     path('login/success/', views.login_success_view, name='login_with_success'),
+    path('admin-panel/', views.admin_panel, name='admin_panel'),
+    path('manager-panel/', views.manager_panel, name='manager_panel'),
+    path('admin-panel/user/<int:user_id>/', views.admin_user_profile, name='admin_user_profile'),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

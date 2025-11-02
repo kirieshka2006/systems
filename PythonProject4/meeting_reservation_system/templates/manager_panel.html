@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Менеджер-панель</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .back-btn:hover {
+            background: #5a6268;
+        }
+        .bookings-table {
+            background: #2d2d2d;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #404040;
+        }
+        th {
+            background: #3a3a3a;
+        }
+        .status-pending { color: #ffc107; }
+        .status-confirmed { color: #28a745; }
+        .status-cancelled { color: #dc3545; }
+        .btn-approve {
+            background: #28a745;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        .btn-reject {
+            background: #dc3545;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .no-bookings {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-actions">
+            <a href="{% url 'home' %}" class="back-btn">
+                ← Назад на главную
+            </a>
+            <h1>📋 Менеджер-панель</h1>
+            <div style="width: 140px;"></div>
+        </div>
+
+        <div class="bookings-table">
+            <h3>⏳ Бронирования ожидающие подтверждения</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Пользователь</th>
+                        <th>Комната</th>
+                        <th>Дата/время</th>
+                        <th>Статус</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- ★★★ ЗАГЛУШКА - БУДУЩИЕ БРОНИРОВАНИЯ ★★★ -->
+                    <tr>
+                        <td>user123</td>
+                        <td>Переговорка №1</td>
+                        <td>01.12.2024 14:00-16:00</td>
+                        <td class="status-pending">⏳ Ожидание</td>
+                        <td>
+                            <button class="btn-approve">✅ Одобрить</button>
+                            <button class="btn-reject">❌ Отклонить</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>user456</td>
+                        <td>Переговорка №3</td>
+                        <td>02.12.2024 10:00-11:00</td>
+                        <td class="status-pending">⏳ Ожидание</td>
+                        <td>
+                            <button class="btn-approve">✅ Одобрить</button>
+                            <button class="btn-reject">❌ Отклонить</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="bookings-table">
+            <h3>✅ Подтвержденные бронирования</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Пользователь</th>
+                        <th>Комната</th>
+                        <th>Дата/время</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>admin</td>
+                        <td>Переговорка №2</td>
+                        <td>01.12.2024 09:00-10:00</td>
+                        <td class="status-confirmed">✅ Подтверждено</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+
+    </div>
+</body>
+</html>

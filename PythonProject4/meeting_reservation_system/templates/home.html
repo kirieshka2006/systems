@@ -316,6 +316,27 @@
                         <span class="menu-description">Помощь и контакты</span>
                     </div>
                 </a>
+<!-- ★★★ АДМИН-ПАНЕЛЬ (ТОЛЬКО ДЛЯ АДМИНОВ) ★★★ -->
+{% if user.role == 'admin' %}
+<a href="{% url 'admin_panel' %}" class="dashboard-item">
+    <span class="icon">⚙️</span>
+    <div class="menu-content">
+        <span class="menu-text">Админ-панель</span>
+        <span class="menu-description">Управление системой</span>
+    </div>
+</a>
+{% endif %}
+
+<!-- ★★★ МЕНЕДЖЕР-ПАНЕЛЬ (ДЛЯ МЕНЕДЖЕРОВ И АДМИНОВ) ★★★ -->
+{% if user.role == 'manager' or user.role == 'admin' %}
+<a href="{% url 'manager_panel' %}" class="dashboard-item">
+    <span class="icon">📋</span>
+    <div class="menu-content">
+        <span class="menu-text">Менеджер-панель</span>
+        <span class="menu-description">Подтверждение броней</span>
+    </div>
+</a>
+{% endif %}
 
                 <!-- БЛОК ПОЛЬЗОВАТЕЛЯ В ОБЩЕЙ СЕТКЕ -->
                 <div class="user-section">

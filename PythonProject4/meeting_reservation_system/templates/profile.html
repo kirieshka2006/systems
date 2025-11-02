@@ -492,6 +492,45 @@
                     <div class="info-value">{{ user.phone }}</div>
                 </div>
                 {% endif %}
+
+                {% if user.first_name %}
+                <div class="info-item">
+                    <div class="info-label">Имя</div>
+                    <div class="info-value">{{ user.first_name }}</div>
+                </div>
+                {% endif %}
+
+                {% if user.last_name %}
+                <div class="info-item">
+                    <div class="info-label">Фамилия</div>
+                    <div class="info-value">{{ user.last_name }}</div>
+                </div>
+                {% endif %}
+
+                {% if user.patronymic %}
+                <div class="info-item">
+                    <div class="info-label">Отчество</div>
+                    <div class="info-value">{{ user.patronymic }}</div>
+                </div>
+                {% endif %}
+
+                {% if user.birth_date %}
+                <div class="info-item">
+                    <div class="info-label">Дата рождения</div>
+                    <div class="info-value">{{ user.birth_date|date:"d.m.Y" }}</div>
+                </div>
+                {% endif %}
+
+                {% if user.gender %}
+                <div class="info-item">
+                    <div class="info-label">Пол</div>
+                    <div class="info-value">
+                        {% if user.gender == 'M' %}Мужской
+                        {% elif user.gender == 'F' %}Женский
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
 <!-- ★★★ ВСТАВЬ ЗДЕСЬ ФОРМУ АВАТАРКИ ★★★ -->
 <div class="edit-form" id="editAvatarForm">
@@ -548,7 +587,35 @@
                 <label>Телефон:</label>
                 <input type="text" name="phone" value="{{ user.phone|default:'' }}" placeholder="+7 (XXX) XXX-XX-XX">
             </div>
+            <!-- ★★★ ДОБАВЬ ЗДЕСЬ НОВЫЕ ПОЛЯ ДЛЯ РЕДАКТИРОВАНИЯ ★★★ -->
+            <div class="form-group">
+                <label>Имя:</label>
+                <input type="text" name="first_name" value="{{ user.first_name|default:'' }}" placeholder="Ваше имя">
+            </div>
 
+            <div class="form-group">
+                <label>Фамилия:</label>
+                <input type="text" name="last_name" value="{{ user.last_name|default:'' }}" placeholder="Ваша фамилия">
+            </div>
+
+            <div class="form-group">
+                <label>Отчество:</label>
+                <input type="text" name="patronymic" value="{{ user.patronymic|default:'' }}" placeholder="Ваше отчество">
+            </div>
+
+            <div class="form-group">
+                <label>Дата рождения:</label>
+                <input type="date" name="birth_date" value="{{ user.birth_date|date:'Y-m-d'|default:'' }}">
+            </div>
+
+            <div class="form-group">
+                <label>Пол:</label>
+                <select name="gender">
+                    <option value="">Не указан</option>
+                    <option value="M" {% if user.gender == 'M' %}selected{% endif %}>Мужской</option>
+                    <option value="F" {% if user.gender == 'F' %}selected{% endif %}>Женский</option>
+                </select>
+            </div>
             <div class="form-actions">
                 <button type="button" class="btn btn-cancel" onclick="closeEditSection('profile')">
                     ❌ Отмена

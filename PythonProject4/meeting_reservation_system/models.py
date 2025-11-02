@@ -10,11 +10,24 @@ class User(AbstractUser):
         ('manager', 'Менеджер'),
         ('user', 'Пользователь'),
     ]
+
+    GENDER_CHOICES = [
+        ('M', 'Мужской'),
+        ('F', 'Женский'),
+    ]
+
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
     phone = models.CharField(max_length=15, blank=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     email_verification_code = models.CharField(max_length=6, blank=True, null=True)
     email_verified = models.BooleanField(default=False)
+
+    # ★★★ НОВЫЕ ПОЛЯ ★★★
+    first_name = models.CharField(max_length=30, blank=True)      # Имя
+    last_name = models.CharField(max_length=30, blank=True)       # Фамилия
+    patronymic = models.CharField(max_length=30, blank=True)      # Отчество
+    birth_date = models.DateField(null=True, blank=True)          # Дата рождения
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True)  # Пол
 
     # Добавляем related_name чтобы избежать конфликтов
     groups = models.ManyToManyField(

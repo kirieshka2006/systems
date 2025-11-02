@@ -223,15 +223,60 @@ def profile_view(request):
 
 
 @login_required
+def admin_panel(request):
+    """Админ-панель управления системой"""
+    # Проверяем что пользователь админ
+    if request.user.role != 'admin':
+        messages.error(request, '❌ Доступ запрещен!')
+        return redirect('home')
+
+    # Получаем всех пользователей для управления
+    users = User.objects.all()
+    return render(request, 'admin_panel.html', {'users': users})
+
+
+@login_required
+def manager_panel(request):
+    """Менеджерская панель для подтверждения бронирований"""
+    # Проверяем что пользователь менеджер или админ
+    if request.user.role not in ['manager', 'admin']:
+        messages.error(request, '❌ Доступ запрещен!')
+        return redirect('home')
+
+    # Пока заглушка - потом добавим реальные бронирования
+    return render(request, 'manager_panel.html')
+
+
+@login_required
+def admin_user_profile(request, user_id):
+    """Просмотр профиля пользователя для админа"""
+    # Разрешаем админам, менеджерам и суперпользователям
+    if request.user.role not in ['admin', 'manager'] and not request.user.is_superuser:
+        messages.error(request, '❌ Доступ запрещен!')
+        return redirect('admin_panel')  # Редирект на админ-панель вместо главной
+
+    try:
+        user = User.objects.get(id=user_id)
+        return render(request, 'admin_user_profile.html', {'target_user': user})
+    except User.DoesNotExist:
+        messages.error(request, '❌ Пользователь не найден!')
+        return redirect('admin_panel')
+
+@login_required
 def update_profile(request):
-    """Обновление данных профиля БЕЗ email"""
+    """Обновление данных профиля"""
     if request.method == 'POST':
         user = request.user
         username = request.POST.get('username')
         phone = request.POST.get('phone')
         avatar = request.FILES.get('avatar')
 
-        print(f"Данные: username={username}, phone={phone}")
+        # ★★★ НОВЫЕ ПОЛЯ ★★★
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        patronymic = request.POST.get('patronymic')
+        birth_date = request.POST.get('birth_date')
+        gender = request.POST.get('gender')
 
         # Проверяем username
         if username and username != user.username:
@@ -243,7 +288,15 @@ def update_profile(request):
         # Сохраняем телефон
         if phone is not None:
             user.phone = phone
-            print(f"Телефон сохранен: {phone}")
+
+        # ★★★ СОХРАНЯЕМ НОВЫЕ ПОЛЯ ★★★
+        user.first_name = first_name
+        user.last_name = last_name
+        user.patronymic = patronymic
+        user.gender = gender
+
+        if birth_date:
+            user.birth_date = birth_date
 
         # Сохраняем аватар
         if avatar:
