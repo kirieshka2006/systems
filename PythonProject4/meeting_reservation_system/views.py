@@ -1,13 +1,14 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
-from .models import Room, User, EmailConfirmation
 from django.contrib.auth import login, authenticate, logout  # ← Добавил logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash
 from django.core.files.storage import FileSystemStorage
 from django.utils import timezone
+from .models import Room, User, EmailConfirmation, Booking
+from django.http import JsonResponse
+from datetime import datetime, timedelta
 
 
 def login_view(request):
@@ -15,11 +16,6 @@ def login_view(request):
     success_message = request.session.pop('recovery_success_message', None)
     if success_message:
         messages.success(request, success_message)
-
-    # ★★★ УБЕРИ ЭТУ ОТЛАДКУ - ОНА ОЧИЩАЕТ СООБЩЕНИЯ! ★★★
-    # storage = messages.get_messages(request)
-    # for message in storage:
-    #     print(f"DEBUG: Сообщение в login - '{message}', тег: '{message.tags}'")
 
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -205,6 +201,9 @@ def register(request):
     return render(request, 'register.html')
 
 
+def info_page(request):
+    """Страница с информацией и правилами"""
+    return render(request, 'info.html')
 
 def home(request):
     """Главная страница"""
@@ -372,6 +371,73 @@ def verify_email(request):
 
         return redirect('profile')
     return redirect('profile')
+
+
+@login_required
+def booking_content(request):
+    """Возвращает только HTML контент для бронирования (без всего шаблона)"""
+    return render(request, 'booking_content.html')
+
+@login_required
+def get_available_rooms(request):
+    """AJAX: Получить доступные комнаты"""
+    date = request.GET.get('date')
+    start_time = request.GET.get('start_time')
+    duration = request.GET.get('duration')
+    participants = request.GET.get('participants')
+
+    # Здесь логика проверки доступности комнат
+    rooms = Room.objects.filter(is_active=True)
+
+    # Фильтрация по вместимости
+    if participants and int(participants) > 0:
+        rooms = rooms.filter(capacity__gte=int(participants))
+
+    # TODO: Проверка занятости по времени
+    available_rooms = []
+    for room in rooms:
+        available_rooms.append({
+            'id': room.id,
+            'name': room.name,
+            'capacity': room.capacity,
+            'location': room.location,
+            'price_per_hour': room.price_per_hour,
+            'amenities': room.amenities
+        })
+
+    return JsonResponse({'rooms': available_rooms})
+
+
+@login_required
+def create_booking(request):
+    """Создать бронирование"""
+    if request.method == 'POST':
+        room_id = request.POST.get('room_id')
+        date = request.POST.get('date')
+        start_time = request.POST.get('start_time')
+        duration = request.POST.get('duration')
+        participants = request.POST.get('participants')
+        description = request.POST.get('description')
+
+        # Создание бронирования
+        try:
+            room = Room.objects.get(id=room_id)
+            start_datetime = datetime.strptime(f"{date} {start_time}", "%Y-%m-%d %H:%M")
+            end_datetime = start_datetime + timedelta(hours=int(duration))
+
+            booking = Booking.objects.create(
+                user=request.user,
+                room=room,
+                start_time=start_datetime,
+                end_time=end_datetime,
+                participants_count=participants,
+                description=description,
+                status='pending'
+            )
+
+            return JsonResponse({'success': True, 'booking_id': booking.id})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
 
 @login_required
 def update_avatar(request):

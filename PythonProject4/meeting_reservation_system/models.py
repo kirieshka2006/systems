@@ -3,6 +3,7 @@ from django.db import models
 import random
 from django.utils import timezone
 from datetime import timedelta
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class User(AbstractUser):
     ROLE_CHOICES = [
@@ -78,7 +79,9 @@ class Room(models.Model):
     capacity = models.IntegerField()
     equipment = models.TextField()
     price_per_hour = models.DecimalField(max_digits=10, decimal_places=2)
-    image = models.ImageField(upload_to='rooms/', blank=True, null=True)  # ← Добавил null=True
+    image = models.ImageField(upload_to='rooms/', blank=True, null=True)
+    is_active = models.BooleanField(default=True)  # ★★★ можно скрыть комнату
+    amenities = models.JSONField(default=list, blank=True)  # ← Добавил null=True
 
     def __str__(self):
         return self.name
@@ -86,9 +89,10 @@ class Room(models.Model):
 
 class Booking(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'Ожидание'),
-        ('confirmed', 'Подтверждено'),
-        ('cancelled', 'Отменено'),
+        ('pending', '⏳ Ожидание'),
+        ('confirmed', '✅ Подтверждено'),
+        ('cancelled', '❌ Отменено'),
+        ('completed', '🔵 Завершено'),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -97,6 +101,8 @@ class Booking(models.Model):
     end_time = models.DateTimeField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
+    participants_count = models.IntegerField(default=1)  # ★★★ кол-во участников
+    description = models.TextField(blank=True)  # ★★★ описание встречи
 
     def __str__(self):
-        return f"{self.user.username} - {self.room.name}"
+        return f"{self.user.username} - {self.room.name} - {self.start_time.strftime('%d.%m.%Y %H:%M')}"

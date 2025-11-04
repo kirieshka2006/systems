@@ -237,39 +237,375 @@
         .rooms {
             max-width: 100%;
         }
+        .booking-section {
+    background: #2d2d2d;
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 25px;
+    border: 1px solid #404040;
+}
+
+.booking-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.booking-header h2 {
+    color: #fff;
+    margin: 0;
+}
+
+.back-btn {
+    background: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.back-btn:hover {
+    background: #5a6268;
+}
+
+.booking-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+    padding: 20px;
+    background: #3a3a3a;
+    border-radius: 10px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-group label {
+    color: #ccc;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.filter-group select,
+.filter-group input {
+    padding: 10px;
+    background: #2d2d2d;
+    border: 1px solid #555;
+    border-radius: 6px;
+    color: #fff;
+}
+
+.btn-apply {
+    background: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    align-self: end;
+}
+
+.btn-apply:hover {
+    background: #0056b3;
+}
+
+.rooms-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.room-card-booking {
+    background: #3a3a3a;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #555;
+}
+
+.room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.room-name {
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.room-capacity {
+    color: #007bff;
+    font-size: 14px;
+}
+
+.time-slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.time-slot {
+    padding: 8px;
+    text-align: center;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    border: 1px solid #555;
+}
+
+.time-slot.free {
+    background: #28a745;
+    color: white;
+}
+
+.time-slot.booked {
+    background: #dc3545;
+    color: white;
+    cursor: not-allowed;
+}
+
+.time-slot.selected {
+    background: #007bff;
+    color: white;
+}
+
+.time-slot.pending {
+    background: #ffc107;
+    color: black;
+}
+
+.admin-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.admin-menu-btn {
+    background: #6c757d;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.admin-menu-btn:hover {
+    background: #5a6268;
+}
+
+.admin-dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background: #2d2d2d;
+    min-width: 200px;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 1000;
+    margin-top: 5px;
+}
+
+.admin-dropdown-content a {
+    color: #e0e0e0;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    border-bottom: 1px solid #404040;
+    font-size: 14px;
+}
+
+.admin-dropdown-content a:hover {
+    background: #3a3a3a;
+    color: #007bff;
+}
+
+.admin-dropdown-content a:last-child {
+    border-bottom: none;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #404040;
+    margin: 5px 0;
+}
+
+.admin-dropdown:hover .admin-dropdown-content {
+    display: block;
+}
+
+.admin-dropdown-top {
+    position: relative;
+    display: inline-block;
+    margin-left: auto;
+}
+
+.admin-menu-btn-top {
+    background: #6c757d;
+    color: white;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.admin-menu-btn-top:hover {
+    background: #5a6268;
+    transform: rotate(90deg);
+    transition: transform 0.3s ease;
+}
+
+.admin-dropdown-content-top {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: #2d2d2d;
+    min-width: 220px;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 1000;
+    margin-top: 5px;
+}
+
+.admin-dropdown-content-top a {
+    color: #e0e0e0;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    border-bottom: 1px solid #404040;
+    font-size: 14px;
+}
+
+.admin-dropdown-content-top a:hover {
+    background: #3a3a3a;
+    transform: translateX(-5px);
+    border-left: 3px solid #007bff;
+    padding-left: 13px;
+    transition: all 0.2s ease;
+    color: #e0e0e0;
+}
+
+.admin-dropdown-content-top a:last-child {
+    border-bottom: none;
+}
+
+.admin-dropdown-top:hover .admin-dropdown-content-top {
+    display: block;
+}
+.admin-dropdown-content-top {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: #2d2d2d;
+    min-width: 220px;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 1000;
+    margin-top: 5px;
+    /* ★★★ ДОБАВИМ ПРОМЕЖУТОК МЕЖДУ ШЕСТЕРЁНКОЙ И МЕНЮ ★★★ */
+    padding-top: 10px;
+}
+
+.admin-dropdown-content-top::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    right: 0;
+    width: 100%;
+    height: 10px;
+    background: transparent;
+}
+
+.admin-dropdown-top:hover .admin-dropdown-content-top {
+    display: block;
+    animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🏢 Система бронирования переговорных комнат</h1>
-        {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-            {% if "вышли" in message|lower %}
-            <div style="
-                background: #28a745;
-                color: white;
-                padding: 10px;
-                border-radius: 5px;
-                margin-bottom: 15px;
-                text-align: center;
-            ">
-                {{ message }}
+<div class="header">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div style="flex: 1;">
+            <h1>🏢 Система бронирования переговорных комнат</h1>
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                {% if "вышли" in message|lower %}
+                <div style="
+                    background: #28a745;
+                    color: white;
+                    padding: 10px;
+                    border-radius: 5px;
+                    margin-bottom: 15px;
+                    text-align: center;
+                ">
+                    {{ message }}
+                </div>
+                {% endif %}
+                {% endfor %}
             </div>
             {% endif %}
-            {% endfor %}
+        </div>
+
+        <!-- ★★★ ШЕСТЕРЁНКА УПРАВЛЕНИЯ В ПРАВОМ ВЕРХНЕМ УГЛУ ★★★ -->
+        {% if user.is_authenticated and user.role in 'admin manager' %}
+        <div class="admin-dropdown-top">
+            <button class="admin-menu-btn-top">⚙️</button>
+            <div class="admin-dropdown-content-top">
+                {% if user.role == 'admin' %}
+                <a href="{% url 'admin_panel' %}">👥 Управление пользователями</a>
+                <a href="javascript:void(0)" onclick="showRoomManagement()">🚪 Управление комнатами</a>
+                <div class="dropdown-divider"></div>
+                {% endif %}
+                <a href="{% url 'manager_panel' %}">📋 Подтверждение бронирований</a>
+                <a href="javascript:void(0)" onclick="showStatistics()">📊 Статистика</a>
+            </div>
         </div>
         {% endif %}
-        <div class="nav">
-            {% if user.is_authenticated %}
-            <p>👋 Привет, <strong>{{ user.username }}</strong>!</p>
-            {% else %}
-            <a href="{% url 'login' %}" class="btn">🔐 Войти</a>
-            <a href="{% url 'register' %}" class="btn">📝 Регистрация</a>
-            {% endif %}
-        </div>
     </div>
 
+    <div class="nav">
+        {% if user.is_authenticated %}
+        <p>👋 Привет, <strong>{{ user.username }}</strong>!</p>
+        {% else %}
+        <a href="{% url 'login' %}" class="btn">🔐 Войти</a>
+        <a href="{% url 'register' %}" class="btn">📝 Регистрация</a>
+        {% endif %}
+    </div>
+</div>
     {% if user.is_authenticated %}
     <!-- ОСНОВНОЙ КОНТЕЙНЕР С БОКОВЫМ МЕНЮ -->
     <div class="main-container">
@@ -277,7 +613,7 @@
         <div class="sidebar">
             <!-- ОСНОВНОЕ МЕНЮ С БЛОКОМ ПОЛЬЗОВАТЕЛЯ В ОДНОЙ СЕТКЕ -->
             <div class="dashboard">
-                <a href="#" class="dashboard-item">
+                <a href="javascript:void(0)" class="dashboard-item" onclick="showRoomsSection()">
                     <span class="icon">🏠</span>
                     <div class="menu-content">
                         <span class="menu-text">Главная страница</span>
@@ -285,7 +621,7 @@
                     </div>
                 </a>
 
-                <a href="#" class="dashboard-item">
+                <a href="javascript:void(0)" class="dashboard-item" onclick="showBookingSection()">
                     <span class="icon">📅</span>
                     <div class="menu-content">
                         <span class="menu-text">Бронирование</span>
@@ -301,7 +637,7 @@
                     </div>
                 </a>
 
-                <a href="#" class="dashboard-item">
+                <a href="{% url 'info' %}" class="dashboard-item">
                     <span class="icon">ℹ️</span>
                     <div class="menu-content">
                         <span class="menu-text">Информация</span>
@@ -316,27 +652,7 @@
                         <span class="menu-description">Помощь и контакты</span>
                     </div>
                 </a>
-<!-- ★★★ АДМИН-ПАНЕЛЬ (ТОЛЬКО ДЛЯ АДМИНОВ) ★★★ -->
-{% if user.role == 'admin' %}
-<a href="{% url 'admin_panel' %}" class="dashboard-item">
-    <span class="icon">⚙️</span>
-    <div class="menu-content">
-        <span class="menu-text">Админ-панель</span>
-        <span class="menu-description">Управление системой</span>
-    </div>
-</a>
-{% endif %}
 
-<!-- ★★★ МЕНЕДЖЕР-ПАНЕЛЬ (ДЛЯ МЕНЕДЖЕРОВ И АДМИНОВ) ★★★ -->
-{% if user.role == 'manager' or user.role == 'admin' %}
-<a href="{% url 'manager_panel' %}" class="dashboard-item">
-    <span class="icon">📋</span>
-    <div class="menu-content">
-        <span class="menu-text">Менеджер-панель</span>
-        <span class="menu-description">Подтверждение броней</span>
-    </div>
-</a>
-{% endif %}
 
                 <!-- БЛОК ПОЛЬЗОВАТЕЛЯ В ОБЩЕЙ СЕТКЕ -->
                 <div class="user-section">
@@ -381,6 +697,14 @@
                 </div>
                 {% endfor %}
             </div>
+            <!-- ★★★ СЕКЦИЯ БРОНИРОВАНИЯ (изначально скрыта) ★★★ -->
+            <div id="booking-section" style="display: none;">
+                <!-- Сюда будет загружаться контент бронирования -->
+            </div>
+            <!-- ★★★ СЕКЦИЯ УПРАВЛЕНИЯ КОМНАТАМИ (для админа) ★★★ -->
+            <div id="room-management-section" style="display: none;">
+                <!-- Сюда будет загружаться управление комнатами -->
+            </div>
         </div>
     </div>
     {% else %}
@@ -399,5 +723,232 @@
         {% endfor %}
     </div>
     {% endif %}
+<script>
+function showBookingSection() {
+    // Скрываем список комнат
+    document.querySelector('.rooms').style.display = 'none';
+
+    // Показываем секцию бронирования
+    document.getElementById('booking-section').style.display = 'block';
+
+    // Загружаем контент бронирования
+    loadBookingContent();
+}
+function showRoomManagement() {
+    // Скрываем текущий контент
+    document.querySelector('.rooms').style.display = 'none';
+    document.getElementById('booking-section').style.display = 'none';
+
+    // Показываем управление комнатами
+    document.getElementById('room-management-section').style.display = 'block';
+    loadRoomManagement();
+}
+
+function loadRoomManagement() {
+    document.getElementById('room-management-section').innerHTML = `
+        <div class="booking-section">
+            <div class="booking-header">
+                <h2>🚪 Управление переговорными комнатами</h2>
+                <button class="back-btn" onclick="showRoomsSection()">← Назад к главной</button>
+            </div>
+
+            <div style="text-align: right; margin-bottom: 20px;">
+                <button class="btn-apply" onclick="showAddRoomForm()">➕ Добавить комнату</button>
+            </div>
+
+            <div id="rooms-list">
+                <!-- Сюда загрузим список комнат -->
+                <div style="text-align: center; color: #999; padding: 40px;">
+                    Загрузка списка комнат...
+                </div>
+            </div>
+
+            <!-- Форма добавления комнаты (изначально скрыта) -->
+            <div id="add-room-form" style="display: none;">
+                <h3>➕ Добавить новую комнату</h3>
+                <!-- Форма будет здесь -->
+            </div>
+        </div>
+    `;
+
+    // Загружаем список комнат
+    loadRoomsList();
+}
+
+function loadRoomsList() {
+    // Заглушка - потом заменим на реальный AJAX запрос
+    document.getElementById('rooms-list').innerHTML = `
+        <div class="room-card-booking">
+            <div class="room-header">
+                <div class="room-name">🚪 Переговорка №1</div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-apply" style="padding: 5px 10px; font-size: 12px;">✏️ Редактировать</button>
+                    <button class="back-btn" style="padding: 5px 10px; font-size: 12px; background: #dc3545;">🗑️ Удалить</button>
+                </div>
+            </div>
+            <div><strong>📍 Местоположение:</strong> Этаж 3, офис 301</div>
+            <div><strong>👥 Вместимость:</strong> 6 человек</div>
+            <div><strong>💰 Цена:</strong> 1500 руб/час</div>
+            <div><strong>🛠️ Оборудование:</strong> Проектор, телевизор, маркерная доска</div>
+        </div>
+
+        <div class="room-card-booking">
+            <div class="room-header">
+                <div class="room-name">🚪 Переговорка №2</div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-apply" style="padding: 5px 10px; font-size: 12px;">✏️ Редактировать</button>
+                    <button class="back-btn" style="padding: 5px 10px; font-size: 12px; background: #dc3545;">🗑️ Удалить</button>
+                </div>
+            </div>
+            <div><strong>📍 Местоположение:</strong> Этаж 2, офис 205</div>
+            <div><strong>👥 Вместимость:</strong> 10 человек</div>
+            <div><strong>💰 Цена:</strong> 2000 руб/час</div>
+            <div><strong>🛠️ Оборудование:</strong> Проектор, конференц-система</div>
+        </div>
+    `;
+}
+
+function showAddRoomForm() {
+    // Покажем форму добавления комнаты
+    document.getElementById('add-room-form').style.display = 'block';
+    document.getElementById('add-room-form').innerHTML = `
+        <div style="background: #3a3a3a; padding: 20px; border-radius: 10px;">
+            <form onsubmit="addNewRoom(event)">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="filter-group">
+                        <label>Название комнаты:</label>
+                        <input type="text" name="room_name" required placeholder="Например: Переговорка №3">
+                    </div>
+                    <div class="filter-group">
+                        <label>Местоположение:</label>
+                        <input type="text" name="location" required placeholder="Например: Этаж 3, офис 301">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="filter-group">
+                        <label>Вместимость (человек):</label>
+                        <input type="number" name="capacity" required min="1" max="50" value="6">
+                    </div>
+                    <div class="filter-group">
+                        <label>Цена за час (руб):</label>
+                        <input type="number" name="price" required min="0" step="100" value="1500">
+                    </div>
+                </div>
+
+                <div class="filter-group" style="margin-bottom: 15px;">
+                    <label>Оборудование:</label>
+                    <textarea name="equipment" rows="3" placeholder="Проектор, телевизор, маркерная доска..." style="width: 100%; padding: 10px; background: #2d2d2d; border: 1px solid #555; border-radius: 6px; color: #fff;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn-apply">💾 Сохранить комнату</button>
+                    <button type="button" class="back-btn" onclick="this.parentElement.parentElement.style.display='none'">❌ Отмена</button>
+                </div>
+            </form>
+        </div>
+    `;
+}
+
+function addNewRoom(event) {
+    event.preventDefault();
+    alert('Комната добавлена! (пока заглушка)');
+    // Здесь будет AJAX запрос на создание комнаты
+}
+
+function showStatistics() {
+    alert('📊 Статистика будет здесь!');
+}
+function showRoomsSection() {
+    // Показываем список комнат
+    document.querySelector('.rooms').style.display = 'block';
+
+    // Скрываем все остальные секции
+    document.getElementById('booking-section').style.display = 'none';
+    document.getElementById('room-management-section').style.display = 'none';
+}
+
+function loadBookingContent() {
+    // Загружаем контент бронирования через AJAX
+    fetch('/booking-content/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(html => {
+            document.getElementById('booking-section').innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки бронирования:', error);
+            document.getElementById('booking-section').innerHTML = `
+                <div class="booking-section">
+                    <div class="booking-header">
+                        <h2>📅 Бронирование переговорок</h2>
+                        <button class="back-btn" onclick="showRoomsSection()">← Назад к комнатам</button>
+                    </div>
+                    <div style="text-align: center; color: #dc3545; padding: 40px;">
+                        ❌ Ошибка загрузки системы бронирования
+                    </div>
+                </div>
+            `;
+        });
+}
+
+// Функции для демо (временные)
+function loadAvailableRooms() {
+    const date = document.getElementById('booking-date')?.value;
+
+    if (!date) {
+        alert('📅 Пожалуйста, выберите дату');
+        return;
+    }
+
+    // Заглушка для демонстрации
+    const roomsGrid = document.getElementById('rooms-grid');
+    if (roomsGrid) {
+        roomsGrid.innerHTML = `
+            <div class="room-card-booking">
+                <div class="room-header">
+                    <div class="room-name">🚪 Переговорка №1</div>
+                    <div class="room-capacity">👥 До 6 человек</div>
+                </div>
+                <div>📍 Этаж 3, офис 301</div>
+                <div>💰 1500 руб/час</div>
+
+                <div class="time-slots">
+                    <div class="time-slot free" onclick="selectTimeSlot(this)">09:00</div>
+                    <div class="time-slot free" onclick="selectTimeSlot(this)">10:00</div>
+                    <div class="time-slot booked">11:00</div>
+                    <div class="time-slot free" onclick="selectTimeSlot(this)">12:00</div>
+                    <div class="time-slot free" onclick="selectTimeSlot(this)">13:00</div>
+                </div>
+
+                <button style="margin-top: 15px; width: 100%;"
+                        class="btn-apply"
+                        onclick="bookRoom(1, '09:00')">
+                    📅 Забронировать выбранное время
+                </button>
+            </div>
+        `;
+    }
+}
+
+function selectTimeSlot(element) {
+    // Снимаем выделение со всех слотов
+    document.querySelectorAll('.time-slot.free').forEach(slot => {
+        slot.classList.remove('selected');
+    });
+    // Выделяем выбранный
+    element.classList.add('selected');
+}
+
+function bookRoom(roomId, time) {
+    alert(`Бронирование комнаты ${roomId} на ${time}`);
+    // Здесь будет вызов модального окна подтверждения
+}
+</script>
+
 </body>
 </html>

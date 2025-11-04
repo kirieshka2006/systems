@@ -21,5 +21,9 @@ urlpatterns = [
     path('admin-panel/', views.admin_panel, name='admin_panel'),
     path('manager-panel/', views.manager_panel, name='manager_panel'),
     path('admin-panel/user/<int:user_id>/', views.admin_user_profile, name='admin_user_profile'),
+    path('info/', views.info_page, name='info'),
+    path('booking-content/', views.booking_content, name='booking_content'),
+    path('api/available-rooms/', views.get_available_rooms, name='available_rooms'),
+    path('api/create-booking/', views.create_booking, name='create_booking'),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
