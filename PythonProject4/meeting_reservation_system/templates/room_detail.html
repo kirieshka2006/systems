@@ -111,39 +111,48 @@
             </span>
         </h1>
 
-        <div class="room-info">
-            <div class="info-item">
-                <strong>📍 Местоположение:</strong> {{ room.location }}
-                <span class="tooltip">
-                    (?)
-                    <span class="tooltiptext">Где находится эта комната в здании</span>
-                </span>
-            </div>
+            <!-- ФОТКА СРАЗУ ПОД ЗАГОЛОВКОМ -->
+    {% if room.image %}
+    <div style="text-align: center; margin: 0 0 25px 0;">
+        <img src="{{ room.image.url }}" alt="{{ room.name }}" style="max-width: 100%; max-height: 400px; border-radius: 10px; border: 1px solid #555; object-fit: cover;">
+    </div>
+    {% endif %}
 
-            <div class="info-item">
-                <strong>👥 Вместимость:</strong> {{ room.capacity }} человек
-                <span class="tooltip">
-                    (?)
-                    <span class="tooltiptext">Максимальное количество людей</span>
-                </span>
-            </div>
-
-            <div class="info-item">
-                <strong>🛠 Оборудование:</strong> {{ room.equipment }}
-                <span class="tooltip">
-                    (?)
-                    <span class="tooltiptext">Что есть в комнате для проведения встреч</span>
-                </span>
-            </div>
-
-            <div class="info-item">
-                <strong>💰 Цена:</strong> {{ room.price_per_hour }} руб/час
-                <span class="tooltip">
-                    (?)
-                    <span class="tooltiptext">Стоимость аренды за один час</span>
-                </span>
-            </div>
+    <div class="room-info">
+        <div class="info-item">
+            <strong>📍 Местоположение:</strong> {{ room.location }}
         </div>
+        <div class="info-item">
+            <strong>👥 Вместимость:</strong> {{ room.capacity }} человек
+        </div>
+        <div class="info-item">
+            <strong>🎯 Категория:</strong>
+            {% if room.category == 'economy' %}🟢 Эконом
+            {% elif room.category == 'standard' %}🔵 Стандарт
+            {% elif room.category == 'comfort' %}🟡 Комфорт
+            {% elif room.category == 'vip' %}🟣 VIP
+            {% elif room.category == 'luxury' %}🔴 Люкс
+            {% endif %}
+        </div>
+
+        {% if user.is_authenticated and user.role in 'admin manager' %}
+        <div class="info-item">
+            <strong>📊 Статус:</strong>
+            <span style="color: {% if room.status == 'active' %}#28a745{% else %}#dc3545{% endif %};">
+                {{ room.get_status_display }}
+            </span>
+        </div>
+        {% endif %}
+
+        <div class="info-item">
+            <strong>🛠 Оборудование:</strong> {{ room.equipment|default:"Не указано" }}
+        </div>
+        <div class="info-item">
+            <strong>💰 Цена:</strong> {{ room.price_per_hour }} руб/час
+        </div>
+    </div>
+
+
 
         <div class="actions">
             {% if user.is_authenticated %}

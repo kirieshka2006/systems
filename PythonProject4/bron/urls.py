@@ -25,5 +25,15 @@ urlpatterns = [
     path('booking-content/', views.booking_content, name='booking_content'),
     path('api/available-rooms/', views.get_available_rooms, name='available_rooms'),
     path('api/create-booking/', views.create_booking, name='create_booking'),
+
+
+    path('room-management/', views.room_management_main, name='room_management_main'),
+    path('room-management/<str:category>/', views.room_management_category, name='room_management_category'),  # Страница категории
+    path('api/add-room/', views.add_room, name='add_room'),
+    path('api/edit-room/<int:room_id>/', views.edit_room, name='edit_room'),
+    path('api/delete-room/<int:room_id>/', views.delete_room, name='delete_room'),
+    path('api/get-room/<int:room_id>/', views.get_room_data, name='get_room_data'),
+    path('api/get-all-rooms/', views.get_all_rooms, name='get_all_rooms'),
+    path('api/toggle-room-status/<int:room_id>/', views.toggle_room_status, name='toggle_room_status'),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

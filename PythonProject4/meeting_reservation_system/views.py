@@ -205,15 +205,34 @@ def info_page(request):
     """Страница с информацией и правилами"""
     return render(request, 'info.html')
 
+
 def home(request):
     """Главная страница"""
-    rooms = Room.objects.all()
+    if request.user.is_authenticated and request.user.role in ['admin', 'manager']:
+        # Админы и менеджеры видят все комнаты
+        rooms = Room.objects.all()
+    else:
+        # Обычные пользователи видят только активные комнаты
+        rooms = Room.objects.filter(status='active')
+
     return render(request, 'home.html', {'rooms': rooms})
+
 
 def room_detail(request, room_id):
     """Страница комнаты"""
-    room = Room.objects.get(id=room_id)
-    return render(request, 'room_detail.html', {'room': room})
+    try:
+        room = Room.objects.get(id=room_id)
+
+        # Проверяем доступ для обычных пользователей
+        if not request.user.is_authenticated or request.user.role not in ['admin', 'manager']:
+            if room.status != 'active':
+                messages.error(request, '❌ Эта комната временно недоступна!')
+                return redirect('home')
+
+        return render(request, 'room_detail.html', {'room': room})
+    except Room.DoesNotExist:
+        messages.error(request, '❌ Комната не найдена!')
+        return redirect('home')
 
 @login_required
 def profile_view(request):
@@ -459,6 +478,139 @@ def update_avatar(request):
     return redirect('profile')
 
 
+
+
+
+@login_required
+def add_room(request):
+    """Добавление новой комнаты - только админ"""
+    if request.user.role != 'admin':
+        return JsonResponse({'success': False, 'error': 'Доступ запрещен!'})
+
+    if request.method == 'POST':
+        try:
+            name = request.POST.get('name')
+            location = request.POST.get('location')
+            capacity = request.POST.get('capacity')
+            price_per_hour = request.POST.get('price_per_hour')
+            equipment = request.POST.get('equipment', '')
+
+            room = Room.objects.create(
+                name=name,
+                location=location,
+                capacity=capacity,
+                price_per_hour=price_per_hour,
+                equipment=equipment,
+                is_active=True
+            )
+
+            # Обработка изображения
+            image = request.FILES.get('image')
+            if image:
+                fs = FileSystemStorage(location='media/rooms/')
+                filename = fs.save(image.name, image)
+                room.image = f'rooms/{filename}'
+                room.save()
+
+            messages.success(request, '✅ Комната успешно добавлена!')
+            return JsonResponse({'success': True, 'room_id': room.id})
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Неверный метод запроса'})
+
+
+@login_required
+def edit_room(request, room_id):
+    """Редактирование комнаты - админ и менеджер"""
+    if request.user.role not in ['admin', 'manager']:
+        return JsonResponse({'success': False, 'error': 'Доступ запрещен!'})
+
+    try:
+        room = Room.objects.get(id=room_id)
+
+        if request.method == 'POST':
+            # Админ может менять всё, менеджер только цену и оборудование
+            if request.user.role == 'admin':
+                room.name = request.POST.get('name', room.name)
+                room.location = request.POST.get('location', room.location)
+                room.capacity = request.POST.get('capacity', room.capacity)
+
+            room.price_per_hour = request.POST.get('price_per_hour', room.price_per_hour)
+            room.equipment = request.POST.get('equipment', room.equipment)
+
+            # Обработка изображения (только админ)
+            if request.user.role == 'admin':
+                image = request.FILES.get('image')
+                if image:
+                    fs = FileSystemStorage(location='media/rooms/')
+                    filename = fs.save(image.name, image)
+                    room.image = f'rooms/{filename}'
+
+            room.save()
+            messages.success(request, '✅ Комната успешно обновлена!')
+            return JsonResponse({'success': True})
+
+    except Room.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Комната не найдена'})
+
+    return JsonResponse({'success': False, 'error': 'Неверный метод запроса'})
+
+
+@login_required
+def get_all_rooms(request):
+    """Получить все комнаты для управления"""
+    if request.user.role not in ['admin', 'manager']:
+        return JsonResponse({'success': False, 'error': 'Доступ запрещен'})
+
+    rooms = Room.objects.all()
+    rooms_data = []
+    for room in rooms:
+        rooms_data.append({
+            'id': room.id,
+            'name': room.name,
+            'location': room.location,
+            'capacity': room.capacity,
+            'price_per_hour': str(room.price_per_hour),
+            'equipment': room.equipment,  # ← ВОТ ЭТО ВАЖНО
+            'image': room.image.url if room.image else None
+        })
+
+    return JsonResponse({'rooms': rooms_data})
+@login_required
+def get_room_data(request, room_id):
+    """Получить данные комнаты для редактирования"""
+    try:
+        room = Room.objects.get(id=room_id)
+        return JsonResponse({
+            'success': True,
+            'room': {
+                'id': room.id,
+                'name': room.name,
+                'location': room.location,
+                'capacity': room.capacity,
+                'price_per_hour': str(room.price_per_hour),
+                'equipment': room.equipment
+            }
+        })
+    except Room.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Комната не найдена'})
+
+@login_required
+def delete_room(request, room_id):
+    """Удаление комнаты - только админ"""
+    if request.user.role != 'admin':
+        return JsonResponse({'success': False, 'error': 'Доступ запрещен!'})
+
+    try:
+        room = Room.objects.get(id=room_id)
+        room.delete()
+        messages.success(request, '✅ Комната успешно удалена!')
+        return JsonResponse({'success': True})
+    except Room.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Комната не найдена'})
+
 @login_required
 def change_password(request):
     """Изменение пароля"""
@@ -477,4 +629,105 @@ def change_password(request):
             update_session_auth_hash(request, request.user)  # чтобы не разлогинивало
             messages.success(request, '🔐 Пароль успешно изменён!')
         return redirect('profile')
+
+
+@login_required
+def room_management_main(request):
+    """Главная страница управления комнатами - выбор категории"""
+    if request.user.role != 'admin':
+        messages.error(request, '❌ Доступ запрещен!')
+        return redirect('home')
+
+    # Считаем комнаты по категориям
+    categories = {
+        'economy': Room.objects.filter(category='economy').count(),
+        'standard': Room.objects.filter(category='standard').count(),
+        'comfort': Room.objects.filter(category='comfort').count(),
+        'vip': Room.objects.filter(category='vip').count(),
+        'luxury': Room.objects.filter(category='luxury').count(),
+    }
+
+    return render(request, 'room_management_main.html', {'categories': categories})
+
+
+@login_required
+def room_management_category(request, category):
+    """Страница управления комнатами конкретной категории"""
+    if request.user.role != 'admin':
+        messages.error(request, '❌ Доступ запрещен!')
+        return redirect('home')
+
+    # Проверяем валидность категории
+    valid_categories = ['economy', 'standard', 'comfort', 'vip', 'luxury']
+    if category not in valid_categories:
+        messages.error(request, '❌ Неверная категория!')
+        return redirect('room_management_main')
+
+    rooms = Room.objects.filter(category=category)
+    category_display = dict(Room.CATEGORY_CHOICES)[category]
+
+    return render(request, 'room_management_category.html', {
+        'rooms': rooms,
+        'category': category,
+        'category_display': category_display
+    })
+@login_required
+def add_room(request):
+    """Добавление новой комнаты - только админ"""
+    if request.user.role != 'admin':
+        return JsonResponse({'success': False, 'error': 'Доступ запрещен!'})
+
+    if request.method == 'POST':
+        try:
+            name = request.POST.get('name')
+            location = request.POST.get('location')
+            capacity = request.POST.get('capacity')
+            price_per_hour = request.POST.get('price_per_hour')
+            equipment = request.POST.get('equipment', '')
+            category = request.POST.get('category', 'standard')  # ← ДОБАВИЛ КАТЕГОРИЮ
+
+            room = Room.objects.create(
+                name=name,
+                location=location,
+                capacity=capacity,
+                price_per_hour=price_per_hour,
+                equipment=equipment,
+                category=category,  # ← ДОБАВИЛ КАТЕГОРИЮ
+                is_active=True
+            )
+
+            # Обработка изображения
+            image = request.FILES.get('image')
+            if image:
+                fs = FileSystemStorage(location='media/rooms/')
+                filename = fs.save(image.name, image)
+                room.image = f'rooms/{filename}'
+                room.save()
+
+            messages.success(request, '✅ Комната успешно добавлена!')
+            return JsonResponse({'success': True, 'room_id': room.id})
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Неверный метод запроса'})
+
+@login_required
+def toggle_room_status(request, room_id):
+    """Переключение статуса комнаты (активна/скрыта)"""
+    if request.user.role != 'admin':
+        return JsonResponse({'success': False, 'error': 'Доступ запрещен!'})
+
+    try:
+        room = Room.objects.get(id=room_id)
+        # Переключаем между активной и скрытой
+        if room.status == 'active':
+            room.status = 'hidden'
+        else:
+            room.status = 'active'
+        room.save()
+
+        return JsonResponse({'success': True, 'new_status': room.status})
+    except Room.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Комната не найдена'})
 

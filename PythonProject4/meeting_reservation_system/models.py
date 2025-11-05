@@ -49,6 +49,36 @@ class User(AbstractUser):
     )
 
 
+class Room(models.Model):
+    CATEGORY_CHOICES = [
+        ('economy', '🟢 Эконом'),
+        ('standard', '🔵 Стандарт'),
+        ('comfort', '🟡 Комфорт'),
+        ('vip', '🟣 VIP'),
+        ('luxury', '🔴 Люкс'),
+    ]
+
+    STATUS_CHOICES = [
+        ('active', '✅ Активна'),
+        ('maintenance', '🚧 На ремонте'),
+        ('hidden', '🔒 Скрыта'),
+        ('inactive', '❌ Неактивна'),
+    ]
+
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='standard')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    name = models.CharField(max_length=100)
+    location = models.CharField(max_length=200)
+    capacity = models.IntegerField()
+    equipment = models.TextField()
+    price_per_hour = models.DecimalField(max_digits=10, decimal_places=2)
+    image = models.ImageField(upload_to='rooms/', blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    amenities = models.JSONField(default=list, blank=True)
+
+    def __str__(self):
+        return self.name
+
 class EmailConfirmation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='email_confirmations')
     email = models.EmailField()
@@ -72,19 +102,6 @@ class EmailConfirmation(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.email} - {self.code}"
-
-class Room(models.Model):
-    name = models.CharField(max_length=100)
-    location = models.CharField(max_length=200)
-    capacity = models.IntegerField()
-    equipment = models.TextField()
-    price_per_hour = models.DecimalField(max_digits=10, decimal_places=2)
-    image = models.ImageField(upload_to='rooms/', blank=True, null=True)
-    is_active = models.BooleanField(default=True)  # ★★★ можно скрыть комнату
-    amenities = models.JSONField(default=list, blank=True)  # ← Добавил null=True
-
-    def __str__(self):
-        return self.name
 
 
 class Booking(models.Model):

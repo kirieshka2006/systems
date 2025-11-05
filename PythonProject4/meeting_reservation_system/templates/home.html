@@ -587,7 +587,7 @@
             <div class="admin-dropdown-content-top">
                 {% if user.role == 'admin' %}
                 <a href="{% url 'admin_panel' %}">👥 Управление пользователями</a>
-                <a href="javascript:void(0)" onclick="showRoomManagement()">🚪 Управление комнатами</a>
+                <a href="{% url 'room_management_main' %}">🚪 Управление комнатами</a>
                 <div class="dropdown-divider"></div>
                 {% endif %}
                 <a href="{% url 'manager_panel' %}">📋 Подтверждение бронирований</a>
@@ -683,20 +683,52 @@
         </div>
 
         <!-- ОСНОВНОЕ СОДЕРЖИМОЕ -->
-        <div class="content">
-            <div class="rooms">
-                {% for room in rooms %}
-                <div class="room-card">
-                    <h3>🚪 {{ room.name }}</h3>
-                    <div class="room-features">
-                        <span class="feature">📍 {{ room.location }}</span>
-                        <span class="feature">👥 До {{ room.capacity }} чел.</span>
-                        <span class="feature">💰 {{ room.price_per_hour }} руб/час</span>
+        <div class="rooms" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+            {% for room in rooms %}
+            <div class="room-card">
+                <!-- ЗАГОЛОВОК СВЕРХУ -->
+                <div class="room-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin: 0;">
+                        {% if room.category == 'economy' %}🟢
+                        {% elif room.category == 'standard' %}🔵
+                        {% elif room.category == 'comfort' %}🟡
+                        {% elif room.category == 'vip' %}🟣
+                        {% elif room.category == 'luxury' %}🔴
+                        {% endif %}
+                        {{ room.name }}
+                    </h3>
+                    {% if user.is_authenticated and user.role in 'admin manager' %}
+                    <div style="color: {% if room.status == 'active' %}#28a745{% else %}#dc3545{% endif %}; font-size: 12px; font-weight: bold;">
+                        {{ room.get_status_display }}
                     </div>
+                    {% endif %}
+                </div>
+
+                <!-- ФОТКА ПОСЛЕ ЗАГОЛОВКА -->
+                {% if room.image %}
+                <div style="margin: 0 0 15px 0; text-align: center;">
+                    <img src="{{ room.image.url }}" alt="{{ room.name }}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; border: 1px solid #555;">
+                </div>
+                {% endif %}
+
+                <!-- ОПИСАНИЕ ПОСЛЕ ФОТКИ -->
+                <p style="color: #ccc; margin: 5px 0 10px 0; font-size: 14px;">
+                    📍 {{ room.location }} | 👥 До {{ room.capacity }} чел. | 💰 {{ room.price_per_hour }} руб/час
+                </p>
+
+                {% if room.equipment %}
+                <div style="margin: 10px 0;">
+                    <strong>🛠️ Оборудование:</strong>
+                    <span style="color: #ccc; font-size: 14px;">{{ room.equipment }}</span>
+                </div>
+                {% endif %}
+
+                <div style="text-align: center; margin-top: 15px;">
                     <a href="{% url 'room_detail' room.id %}" class="btn">🔍 Подробнее</a>
                 </div>
-                {% endfor %}
             </div>
+            {% endfor %}
+        </div>
             <!-- ★★★ СЕКЦИЯ БРОНИРОВАНИЯ (изначально скрыта) ★★★ -->
             <div id="booking-section" style="display: none;">
                 <!-- Сюда будет загружаться контент бронирования -->
@@ -724,9 +756,14 @@
     </div>
     {% endif %}
 <script>
+
 function showBookingSection() {
     // Скрываем список комнат
     document.querySelector('.rooms').style.display = 'none';
+
+    // ОЧИЩАЕМ секцию управления комнатами ИЛИ перезаписываем её
+    document.getElementById('room-management-section').style.display = 'none';
+    document.getElementById('room-management-section').innerHTML = ''; // очищаем содержимое
 
     // Показываем секцию бронирования
     document.getElementById('booking-section').style.display = 'block';
@@ -734,138 +771,28 @@ function showBookingSection() {
     // Загружаем контент бронирования
     loadBookingContent();
 }
-function showRoomManagement() {
-    // Скрываем текущий контент
-    document.querySelector('.rooms').style.display = 'none';
-    document.getElementById('booking-section').style.display = 'none';
 
-    // Показываем управление комнатами
-    document.getElementById('room-management-section').style.display = 'block';
-    loadRoomManagement();
-}
 
-function loadRoomManagement() {
-    document.getElementById('room-management-section').innerHTML = `
-        <div class="booking-section">
-            <div class="booking-header">
-                <h2>🚪 Управление переговорными комнатами</h2>
-                <button class="back-btn" onclick="showRoomsSection()">← Назад к главной</button>
-            </div>
 
-            <div style="text-align: right; margin-bottom: 20px;">
-                <button class="btn-apply" onclick="showAddRoomForm()">➕ Добавить комнату</button>
-            </div>
-
-            <div id="rooms-list">
-                <!-- Сюда загрузим список комнат -->
-                <div style="text-align: center; color: #999; padding: 40px;">
-                    Загрузка списка комнат...
-                </div>
-            </div>
-
-            <!-- Форма добавления комнаты (изначально скрыта) -->
-            <div id="add-room-form" style="display: none;">
-                <h3>➕ Добавить новую комнату</h3>
-                <!-- Форма будет здесь -->
-            </div>
-        </div>
-    `;
-
-    // Загружаем список комнат
-    loadRoomsList();
-}
-
-function loadRoomsList() {
-    // Заглушка - потом заменим на реальный AJAX запрос
-    document.getElementById('rooms-list').innerHTML = `
-        <div class="room-card-booking">
-            <div class="room-header">
-                <div class="room-name">🚪 Переговорка №1</div>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn-apply" style="padding: 5px 10px; font-size: 12px;">✏️ Редактировать</button>
-                    <button class="back-btn" style="padding: 5px 10px; font-size: 12px; background: #dc3545;">🗑️ Удалить</button>
-                </div>
-            </div>
-            <div><strong>📍 Местоположение:</strong> Этаж 3, офис 301</div>
-            <div><strong>👥 Вместимость:</strong> 6 человек</div>
-            <div><strong>💰 Цена:</strong> 1500 руб/час</div>
-            <div><strong>🛠️ Оборудование:</strong> Проектор, телевизор, маркерная доска</div>
-        </div>
-
-        <div class="room-card-booking">
-            <div class="room-header">
-                <div class="room-name">🚪 Переговорка №2</div>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn-apply" style="padding: 5px 10px; font-size: 12px;">✏️ Редактировать</button>
-                    <button class="back-btn" style="padding: 5px 10px; font-size: 12px; background: #dc3545;">🗑️ Удалить</button>
-                </div>
-            </div>
-            <div><strong>📍 Местоположение:</strong> Этаж 2, офис 205</div>
-            <div><strong>👥 Вместимость:</strong> 10 человек</div>
-            <div><strong>💰 Цена:</strong> 2000 руб/час</div>
-            <div><strong>🛠️ Оборудование:</strong> Проектор, конференц-система</div>
-        </div>
-    `;
-}
-
-function showAddRoomForm() {
-    // Покажем форму добавления комнаты
-    document.getElementById('add-room-form').style.display = 'block';
-    document.getElementById('add-room-form').innerHTML = `
-        <div style="background: #3a3a3a; padding: 20px; border-radius: 10px;">
-            <form onsubmit="addNewRoom(event)">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                    <div class="filter-group">
-                        <label>Название комнаты:</label>
-                        <input type="text" name="room_name" required placeholder="Например: Переговорка №3">
-                    </div>
-                    <div class="filter-group">
-                        <label>Местоположение:</label>
-                        <input type="text" name="location" required placeholder="Например: Этаж 3, офис 301">
-                    </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                    <div class="filter-group">
-                        <label>Вместимость (человек):</label>
-                        <input type="number" name="capacity" required min="1" max="50" value="6">
-                    </div>
-                    <div class="filter-group">
-                        <label>Цена за час (руб):</label>
-                        <input type="number" name="price" required min="0" step="100" value="1500">
-                    </div>
-                </div>
-
-                <div class="filter-group" style="margin-bottom: 15px;">
-                    <label>Оборудование:</label>
-                    <textarea name="equipment" rows="3" placeholder="Проектор, телевизор, маркерная доска..." style="width: 100%; padding: 10px; background: #2d2d2d; border: 1px solid #555; border-radius: 6px; color: #fff;"></textarea>
-                </div>
-
-                <div style="display: flex; gap: 10px;">
-                    <button type="submit" class="btn-apply">💾 Сохранить комнату</button>
-                    <button type="button" class="back-btn" onclick="this.parentElement.parentElement.style.display='none'">❌ Отмена</button>
-                </div>
-            </form>
-        </div>
-    `;
-}
-
-function addNewRoom(event) {
-    event.preventDefault();
-    alert('Комната добавлена! (пока заглушка)');
-    // Здесь будет AJAX запрос на создание комнаты
-}
 
 function showStatistics() {
     alert('📊 Статистика будет здесь!');
 }
+
 function showRoomsSection() {
+    const roomsContainer = document.querySelector('.rooms');
+
     // Показываем список комнат
-    document.querySelector('.rooms').style.display = 'block';
+    roomsContainer.style.display = 'grid';
+    roomsContainer.style.gridTemplateColumns = 'repeat(auto-fit, minmax(400px, 1fr))';
+    roomsContainer.style.gap = '20px';
 
     // Скрываем все остальные секции
     document.getElementById('booking-section').style.display = 'none';
+    document.getElementById('booking-section').innerHTML = '';
+
     document.getElementById('room-management-section').style.display = 'none';
+    document.getElementById('room-management-section').innerHTML = '';
 }
 
 function loadBookingContent() {
