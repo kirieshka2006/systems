@@ -552,6 +552,34 @@
     from { opacity: 0; transform: translateY(-5px); }
     to { opacity: 1; transform: translateY(0); }
 }
+/* Стили для обрезки текста оборудования */
+.equipment-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;    /* Ограничение в 2 строки */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4em;
+    max-height: 2.8em;
+    word-wrap: break-word;
+}
+
+/* Fallback для браузеров без поддержки line-clamp */
+@supports not (-webkit-line-clamp: 2) {
+    .equipment-text {
+        max-height: 2.8em;
+        overflow: hidden;
+        position: relative;
+    }
+    .equipment-text::after {
+        content: '...';
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: #2d2d2d;
+        padding: 0 5px;
+    }
+}
 
     </style>
 </head>
@@ -719,7 +747,7 @@
                 {% if room.equipment %}
                 <div style="margin: 10px 0;">
                     <strong>🛠️ Оборудование:</strong>
-                    <span style="color: #ccc; font-size: 14px;">{{ room.equipment }}</span>
+                    <span class="equipment-text" style="color: #ccc; font-size: 14px;">{{ room.equipment }}</span>
                 </div>
                 {% endif %}
 

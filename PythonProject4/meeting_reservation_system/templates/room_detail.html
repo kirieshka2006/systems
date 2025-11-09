@@ -99,6 +99,26 @@
             border-radius: 8px;
             border-left: 4px solid #007bff;
         }
+        .equipment-full-text {
+            white-space: pre-line;    /* Сохраняет переносы строк */
+            word-wrap: break-word;    /* Перенос длинных слов */
+            line-height: 1.5;
+            margin-top: 5px;
+            padding: 8px;
+            background: #3a3a3a;
+            border-radius: 6px;
+            border-left: 3px solid #007bff;
+        }
+
+        /* Улучшаем внешний вид info-item */
+        .info-item {
+            margin: 15px 0;
+            padding: 10px;
+            background: #2d2d2d;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+
     </style>
 </head>
 <body>
@@ -114,7 +134,7 @@
             <!-- ФОТКА СРАЗУ ПОД ЗАГОЛОВКОМ -->
     {% if room.image %}
     <div style="text-align: center; margin: 0 0 25px 0;">
-        <img src="{{ room.image.url }}" alt="{{ room.name }}" style="max-width: 100%; max-height: 400px; border-radius: 10px; border: 1px solid #555; object-fit: cover;">
+        <img src="{{ room.image.url }}" alt="{{ room.name }}" style="max-width: 100%; max-height: 600px; border-radius: 10px; border: 1px solid #555; object-fit: cover;">
     </div>
     {% endif %}
 
@@ -145,8 +165,10 @@
         {% endif %}
 
         <div class="info-item">
-            <strong>🛠 Оборудование:</strong> {{ room.equipment|default:"Не указано" }}
+            <strong>🛠 Оборудование:</strong>
+            <div class="equipment-full-text">{{ room.equipment|default:"Не указано" }}</div>
         </div>
+
         <div class="info-item">
             <strong>💰 Цена:</strong> {{ room.price_per_hour }} руб/час
         </div>
