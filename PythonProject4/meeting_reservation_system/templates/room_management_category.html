@@ -43,12 +43,12 @@
     margin-top: 20px;
 }
 
-        .room-card {
-            background: #2d2d2d;
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #404040;
-        }
+.room-card {
+    background: #2d2d2d;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #404040;
+}
 
 .room-header {
     display: flex;
@@ -62,18 +62,11 @@
 .right-side {
     display: flex;
     flex-direction: column;
-    gap: 15px;
     align-items: flex-end;
-    min-width: 0;
+    gap: 15px;
 }
 
-        .room-image {
-            max-width: 200px;
-            max-height: 150px;
-            border-radius: 8px;
-            border: 1px solid #555;
-            object-fit: cover;
-        }
+
 
 .btn {
     padding: 8px 12px;
@@ -158,13 +151,35 @@
         }
 .room-actions {
     display: flex;
-    flex-direction: row;
-    gap: 6px;
+    gap: 8px;
     flex-wrap: nowrap;
-    justify-content: flex-end;
-    margin-bottom: 10px;
+}
+.room-title-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 15px;
+}
+.room-title-container h3 {
+    margin: 0;
+    flex: 1;
+}
+.room-image-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
 }
 
+.room-image {
+    width: 100%; /* Почти на всю ширину */
+    max-height: 450px; /* Ещё больше */
+    height: auto;
+    border-radius: 12px;
+    border: 2px solid #666;
+    object-fit: cover;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4); /* Более заметная тень */
+}
 
 .info-blocks {
     display: grid;
@@ -186,7 +201,10 @@
     justify-content: center;
     min-height: 65px; /* фиксированная высота для одинаковых блоков */
 }
-
+.info-container {
+    flex: 1;
+    width: 100%;
+}
 .info-block strong {
     display: block;
     margin-bottom: 6px;
@@ -222,10 +240,28 @@
     {% for room in rooms %}
         <div class="room-card">
             <div class="room-header">
-                <!-- ЛЕВАЯ ЧАСТЬ - ИНФОРМАЦИЯ -->
-                <div style="flex: 1;">
-                    <h3>{{ room.name }}</h3>
+                <!-- ОСНОВНОЙ КОНТЕЙНЕР -->
+                <div class="info-container">
+                    <!-- ЗАГОЛОВОК С КНОПКАМИ В ОДНОЙ СТРОКЕ -->
+                    <div class="room-title-container">
+                        <h3>{{ room.name }}</h3>
+                        <div class="room-actions">
+                            <button class="btn btn-toggle" onclick="toggleRoomStatus({{ room.id }})">
+                                {% if room.status == 'active' %}👁️ Скрыть{% else %}👁️ Показать{% endif %}
+                            </button>
+                            <button class="btn btn-edit" onclick="editRoom({{ room.id }})">✏️ Редакт.</button>
+                            <button class="btn btn-delete" onclick="deleteRoom({{ room.id }})">🗑️ Удалить</button>
+                        </div>
+                    </div>
 
+                    <!-- ФОТОГРАФИЯ ПОСЕРЕДИНЕ -->
+                    {% if room.image %}
+                    <div class="room-image-container">
+                        <img src="{{ room.image.url }}" alt="{{ room.name }}" class="room-image">
+                    </div>
+                    {% endif %}
+
+                    <!-- ИНФОРМАЦИОННЫЕ БЛОКИ -->
                     <div class="info-blocks">
                         <div class="info-block">
                             <strong>📍 Местоположение</strong>
@@ -245,25 +281,11 @@
                                 {{ room.get_status_display }}
                             </div>
                         </div>
-<div class="info-block equipment-block">
-        <strong>🛠️ Оборудование</strong>
-        <div class="value">{{ room.equipment|default:"Не указано" }}</div>
-    </div>
+                        <div class="info-block equipment-block">
+                            <strong>🛠️ Оборудование</strong>
+                            <div class="value">{{ room.equipment|default:"Не указано" }}</div>
+                        </div>
                     </div>
-                </div>
-
-                <!-- ПРАВАЯ ЧАСТЬ - КНОПКИ И ФОТКА -->
-                <div class="right-side">
-                    <div class="room-actions">
-                        <button class="btn btn-toggle" onclick="toggleRoomStatus({{ room.id }})">
-                            {% if room.status == 'active' %}👁️ Скрыть{% else %}👁️ Показать{% endif %}
-                        </button>
-                        <button class="btn btn-edit" onclick="editRoom({{ room.id }})">✏️ Редакт.</button>
-                        <button class="btn btn-delete" onclick="deleteRoom({{ room.id }})">🗑️ Удалить</button>
-                    </div>
-                    {% if room.image %}
-                        <img src="{{ room.image.url }}" alt="{{ room.name }}" class="room-image">
-                    {% endif %}
                 </div>
             </div> <!-- /room-header -->
         </div> <!-- /room-card -->
@@ -272,7 +294,7 @@
             В этой категории пока нет комнат
         </div>
     {% endfor %}
-</div> <!-- ✅ /rooms-grid -->
+</div> <!-- /rooms-grid -->
     </div>
 
     <!-- Модальное окно для добавления/редактирования -->
