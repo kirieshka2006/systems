@@ -1,0 +1,137 @@
+<form class="booking-form" onsubmit="submitBooking(event)">
+    {% csrf_token %}
+    <input type="hidden" name="room_id" value="{{ room.id }}">
+
+    <div class="form-group">
+        <label>📅 Дата бронирования:</label>
+        <input type="date" name="date" id="bookingDate" required
+               min="{{ now|date:'Y-m-d' }}">
+    </div>
+
+    <div class="form-group">
+        <label>⏰ Время начала:</label>
+        <select name="start_time" required>
+            <option value="">Выберите время</option>
+            <option value="09:00">09:00</option>
+            <option value="10:00">10:00</option>
+            <option value="11:00">11:00</option>
+            <option value="12:00">12:00</option>
+            <option value="13:00">13:00</option>
+            <option value="14:00">14:00</option>
+            <option value="15:00">15:00</option>
+            <option value="16:00">16:00</option>
+            <option value="17:00">17:00</option>
+            <option value="18:00">18:00</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>⏱️ Продолжительность:</label>
+        <select name="duration" required>
+            <option value="1">1 час</option>
+            <option value="2">2 часа</option>
+            <option value="3">3 часа</option>
+            <option value="4">4 часа</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>👥 Количество участников:</label>
+        <input type="number" name="participants" min="1" max="{{ room.capacity }}"
+               value="1" required>
+        <small>Максимум: {{ room.capacity }} человек</small>
+    </div>
+
+    <div class="form-group">
+        <label>📝 Описание встречи:</label>
+        <textarea name="description" rows="3" placeholder="Цель встречи..."></textarea>
+    </div>
+
+    <div class="form-actions">
+        <button type="button" class="btn-cancel" onclick="closeBookingModal()">Отмена</button>
+        <button type="submit" class="btn-submit">✅ Забронировать</button>
+    </div>
+</form>
+
+<style>
+.booking-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    color: #ccc;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 12px;
+    background: #3a3a3a;
+    border: 1px solid #555;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-group small {
+    color: #888;
+    font-size: 12px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.btn-cancel {
+    background: #6c757d;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-submit {
+    background: #28a745;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.btn-cancel:hover {
+    background: #5a6268;
+}
+
+.btn-submit:hover {
+    background: #218838;
+}
+</style>
+
+<script>
+// Устанавливаем минимальную дату как сегодня
+document.getElementById('bookingDate').min = new Date().toISOString().split('T')[0];
+</script>

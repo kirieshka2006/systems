@@ -70,7 +70,10 @@ class Room(models.Model):
     name = models.CharField(max_length=100)
     location = models.CharField(max_length=200)
     capacity = models.IntegerField()
-    equipment = models.TextField()
+    equipment = models.TextField(
+        blank=True,
+        help_text="Вводите каждый пункт оборудования с новой строки. Например:\n- Проектор\n- Маркерная доска\n- Wi-Fi\n- Кондиционер"
+    )
     price_per_hour = models.DecimalField(max_digits=10, decimal_places=2)
     image = models.ImageField(upload_to='rooms/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
@@ -78,6 +81,38 @@ class Room(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def equipment_list(self):
+        """Возвращает список оборудования"""
+        if self.equipment:
+            return [item.strip() for item in self.equipment.split('\n') if item.strip()]
+        return []
+
+    def get_equipment_columns(self):
+        """Разделяет оборудование на две колонки"""
+        items = self.equipment_list
+        if not items:
+            return [], []
+
+        mid = (len(items) + 1) // 2  # Делим пополам
+        return items[:mid], items[mid:]
+
+    @property
+    def equipment_list(self):
+        """Возвращает список оборудования"""
+        if self.equipment:
+            return [item.strip() for item in self.equipment.split('\n') if item.strip()]
+        return []
+
+    def get_equipment_columns(self):
+        """Разделяет оборудование на две колонки"""
+        items = self.equipment_list
+        if not items:
+            return [], []
+
+        mid = (len(items) + 1) // 2  # Делим пополам
+        return items[:mid], items[mid:]
 
 class EmailConfirmation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='email_confirmations')

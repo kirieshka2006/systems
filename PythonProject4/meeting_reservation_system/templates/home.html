@@ -588,6 +588,114 @@
     }
 }
 
+        /* Стили для модального окна бронирования */
+#bookingModal .modal-content {
+    background: #2d2d2d;
+    padding: 30px;
+    border-radius: 15px;
+    border: 1px solid #404040;
+}
+
+.booking-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    color: #ccc;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.form-group input,
+.form-group select {
+    padding: 12px;
+    background: #3a3a3a;
+    border: 1px solid #555;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+}
+
+.time-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.time-slot {
+    padding: 10px;
+    text-align: center;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid #555;
+    background: #3a3a3a;
+    transition: all 0.3s ease;
+}
+
+.time-slot.free {
+    background: #28a745;
+    color: white;
+}
+
+.time-slot.booked {
+    background: #dc3545;
+    color: white;
+    cursor: not-allowed;
+}
+
+.time-slot.selected {
+    background: #007bff;
+    color: white;
+    transform: scale(1.05);
+}
+
+.btn-book {
+    background: #28a745;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+.btn-book:hover {
+    background: #218838;
+}
+/* Стили для модального окна бронирования */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+}
+
+.modal-content {
+    background: #2d2d2d;
+    margin: 10% auto;
+    padding: 25px;
+    border-radius: 15px;
+    border: 1px solid #404040;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    position: relative;
+}
+
     </style>
 </head>
 <body>
@@ -653,14 +761,6 @@
                     <div class="menu-content">
                         <span class="menu-text">Главная страница</span>
                         <span class="menu-description">Начальная страница системы</span>
-                    </div>
-                </a>
-
-                <a href="javascript:void(0)" class="dashboard-item" onclick="showBookingSection()">
-                    <span class="icon">📅</span>
-                    <div class="menu-content">
-                        <span class="menu-text">Бронирование</span>
-                        <span class="menu-description">Забронировать переговорку</span>
                     </div>
                 </a>
 
@@ -758,22 +858,20 @@
                 </div>
                 {% endif %}
 
-                <div style="text-align: center; margin-top: 15px;">
-                    <a href="{% url 'room_detail' room.id %}" class="btn">🔍 Подробнее</a>
-                </div>
+<div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+    <a href="{% url 'room_detail' room.id %}" class="btn">🔍 Подробнее</a>
+    <button class="btn" onclick="openBookingModal({{ room.id }})"
+            style="background: #28a745;">📅 Забронировать</button>
+</div>
             </div>
             {% endfor %}
         </div>
-            <!-- ★★★ СЕКЦИЯ БРОНИРОВАНИЯ (изначально скрыта) ★★★ -->
-            <div id="booking-section" style="display: none;">
-                <!-- Сюда будет загружаться контент бронирования -->
-            </div>
             <!-- ★★★ СЕКЦИЯ УПРАВЛЕНИЯ КОМНАТАМИ (для админа) ★★★ -->
             <div id="room-management-section" style="display: none;">
                 <!-- Сюда будет загружаться управление комнатами -->
             </div>
         </div>
-    </div>
+
     {% else %}
     <!-- СТАРЫЙ СПИСОК КОМНАТ ДЛЯ НЕАВТОРИЗОВАННЫХ -->
     <div class="rooms">
@@ -790,25 +888,16 @@
         {% endfor %}
     </div>
     {% endif %}
+<div id="bookingModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <span class="close" onclick="closeBookingModal()" style="float: right; font-size: 24px; cursor: pointer; color: #ccc;">&times;</span>
+        <h3 style="margin: 0 0 20px 0; color: #fff;">📅 Бронирование комнаты</h3>
+        <div id="bookingModalContent">
+            <!-- Сюда будет загружаться форма -->
+        </div>
+    </div>
+</div>
 <script>
-
-function showBookingSection() {
-    // Скрываем список комнат
-    document.querySelector('.rooms').style.display = 'none';
-
-    // ОЧИЩАЕМ секцию управления комнатами ИЛИ перезаписываем её
-    document.getElementById('room-management-section').style.display = 'none';
-    document.getElementById('room-management-section').innerHTML = ''; // очищаем содержимое
-
-    // Показываем секцию бронирования
-    document.getElementById('booking-section').style.display = 'block';
-
-    // Загружаем контент бронирования
-    loadBookingContent();
-}
-
-
-
 
 function showStatistics() {
     alert('📊 Статистика будет здесь!');
@@ -830,85 +919,65 @@ function showRoomsSection() {
     document.getElementById('room-management-section').innerHTML = '';
 }
 
-function loadBookingContent() {
-    // Загружаем контент бронирования через AJAX
-    fetch('/booking-content/')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.text();
-        })
+
+
+
+
+
+
+// Функции для модального окна бронирования
+// Функции для модального окна бронирования
+function openBookingModal(roomId) {
+    fetch(`/api/booking-form/${roomId}/`)
+        .then(response => response.text())
         .then(html => {
-            document.getElementById('booking-section').innerHTML = html;
+            document.getElementById('bookingModalContent').innerHTML = html;
+            document.getElementById('bookingModal').style.display = 'block';
         })
         .catch(error => {
-            console.error('Ошибка загрузки бронирования:', error);
-            document.getElementById('booking-section').innerHTML = `
-                <div class="booking-section">
-                    <div class="booking-header">
-                        <h2>📅 Бронирование переговорок</h2>
-                        <button class="back-btn" onclick="showRoomsSection()">← Назад к комнатам</button>
-                    </div>
-                    <div style="text-align: center; color: #dc3545; padding: 40px;">
-                        ❌ Ошибка загрузки системы бронирования
-                    </div>
-                </div>
-            `;
+            console.error('Ошибка:', error);
+            document.getElementById('bookingModalContent').innerHTML =
+                '<p style="color: #dc3545;">Ошибка загрузки формы бронирования</p>';
         });
 }
 
-// Функции для демо (временные)
-function loadAvailableRooms() {
-    const date = document.getElementById('booking-date')?.value;
-
-    if (!date) {
-        alert('📅 Пожалуйста, выберите дату');
-        return;
-    }
-
-    // Заглушка для демонстрации
-    const roomsGrid = document.getElementById('rooms-grid');
-    if (roomsGrid) {
-        roomsGrid.innerHTML = `
-            <div class="room-card-booking">
-                <div class="room-header">
-                    <div class="room-name">🚪 Переговорка №1</div>
-                    <div class="room-capacity">👥 До 6 человек</div>
-                </div>
-                <div>📍 Этаж 3, офис 301</div>
-                <div>💰 1500 руб/час</div>
-
-                <div class="time-slots">
-                    <div class="time-slot free" onclick="selectTimeSlot(this)">09:00</div>
-                    <div class="time-slot free" onclick="selectTimeSlot(this)">10:00</div>
-                    <div class="time-slot booked">11:00</div>
-                    <div class="time-slot free" onclick="selectTimeSlot(this)">12:00</div>
-                    <div class="time-slot free" onclick="selectTimeSlot(this)">13:00</div>
-                </div>
-
-                <button style="margin-top: 15px; width: 100%;"
-                        class="btn-apply"
-                        onclick="bookRoom(1, '09:00')">
-                    📅 Забронировать выбранное время
-                </button>
-            </div>
-        `;
-    }
+function closeBookingModal() {
+    document.getElementById('bookingModal').style.display = 'none';
 }
 
-function selectTimeSlot(element) {
-    // Снимаем выделение со всех слотов
-    document.querySelectorAll('.time-slot.free').forEach(slot => {
-        slot.classList.remove('selected');
+function submitBooking(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.target);
+
+    fetch('/api/create-booking/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Бронирование успешно создано! Ожидайте подтверждения.');
+            closeBookingModal();
+        } else {
+            alert('❌ Ошибка: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        alert('❌ Ошибка при бронировании');
     });
-    // Выделяем выбранный
-    element.classList.add('selected');
 }
 
-function bookRoom(roomId, time) {
-    alert(`Бронирование комнаты ${roomId} на ${time}`);
-    // Здесь будет вызов модального окна подтверждения
+// Закрытие модального окна при клике вне его
+window.onclick = function(event) {
+    const modal = document.getElementById('bookingModal');
+    if (event.target === modal) {
+        closeBookingModal();
+    }
 }
 </script>
 

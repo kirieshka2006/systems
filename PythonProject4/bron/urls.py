@@ -22,7 +22,7 @@ urlpatterns = [
     path('manager-panel/', views.manager_panel, name='manager_panel'),
     path('admin-panel/user/<int:user_id>/', views.admin_user_profile, name='admin_user_profile'),
     path('info/', views.info_page, name='info'),
-    path('booking-content/', views.booking_content, name='booking_content'),
+
     path('api/available-rooms/', views.get_available_rooms, name='available_rooms'),
     path('api/create-booking/', views.create_booking, name='create_booking'),
 
@@ -35,5 +35,7 @@ urlpatterns = [
     path('api/get-room/<int:room_id>/', views.get_room_data, name='get_room_data'),
     path('api/get-all-rooms/', views.get_all_rooms, name='get_all_rooms'),
     path('api/toggle-room-status/<int:room_id>/', views.toggle_room_status, name='toggle_room_status'),
+
+    path('api/booking-form/<int:room_id>/', views.booking_form, name='booking_form'),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

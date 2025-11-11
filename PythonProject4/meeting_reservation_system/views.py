@@ -392,10 +392,7 @@ def verify_email(request):
     return redirect('profile')
 
 
-@login_required
-def booking_content(request):
-    """Возвращает только HTML контент для бронирования (без всего шаблона)"""
-    return render(request, 'booking_content.html')
+
 
 @login_required
 def get_available_rooms(request):
@@ -438,11 +435,27 @@ def create_booking(request):
         participants = request.POST.get('participants')
         description = request.POST.get('description')
 
-        # Создание бронирования
         try:
             room = Room.objects.get(id=room_id)
+
+            # Проверяем доступность комнаты
+            if room.status != 'active':
+                return JsonResponse({'success': False, 'error': 'Эта комната временно недоступна'})
+
+            # Проверяем вместимость
+            if int(participants) > room.capacity:
+                return JsonResponse(
+                    {'success': False, 'error': f'Превышена вместимость комнаты (макс: {room.capacity} чел.)'})
+
+            # Создаем datetime объекты
             start_datetime = datetime.strptime(f"{date} {start_time}", "%Y-%m-%d %H:%M")
             end_datetime = start_datetime + timedelta(hours=int(duration))
+
+            # Проверяем что бронирование в будущем
+            if start_datetime < timezone.now():
+                return JsonResponse({'success': False, 'error': 'Нельзя бронировать в прошлом'})
+
+            # TODO: Добавить проверку пересечения с другими бронированиями
 
             booking = Booking.objects.create(
                 user=request.user,
@@ -455,6 +468,9 @@ def create_booking(request):
             )
 
             return JsonResponse({'success': True, 'booking_id': booking.id})
+
+        except Room.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Комната не найдена'})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
 
@@ -731,3 +747,11 @@ def toggle_room_status(request, room_id):
     except Room.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Комната не найдена'})
 
+@login_required
+def booking_form(request, room_id):
+    """Возвращает HTML форму бронирования для модального окна"""
+    try:
+        room = Room.objects.get(id=room_id)
+        return render(request, 'booking_form.html', {'room': room})
+    except Room.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Комната не найдена'})
