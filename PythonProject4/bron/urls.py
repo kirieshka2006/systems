@@ -23,19 +23,24 @@ urlpatterns = [
     path('admin-panel/user/<int:user_id>/', views.admin_user_profile, name='admin_user_profile'),
     path('info/', views.info_page, name='info'),
 
+    # Техподдержка
+    path('support/', views.support_view, name='support'),
+    path('support/create-ticket/', views.create_ticket, name='create_ticket'),
+    path('support/ticket/<int:ticket_id>/', views.ticket_detail, name='ticket_detail'),
+    path('support/ticket/<int:ticket_id>/update-status/', views.update_ticket_status, name='update_ticket_status'),
+
     path('api/available-rooms/', views.get_available_rooms, name='available_rooms'),
     path('api/create-booking/', views.create_booking, name='create_booking'),
 
-
     path('room-management/', views.room_management_main, name='room_management_main'),
-    path('room-management/<str:category>/', views.room_management_category, name='room_management_category'),  # Страница категории
+    path('room-management/<str:category>/', views.room_management_category, name='room_management_category'),
     path('api/add-room/', views.add_room, name='add_room'),
     path('api/edit-room/<int:room_id>/', views.edit_room, name='edit_room'),
     path('api/delete-room/<int:room_id>/', views.delete_room, name='delete_room'),
     path('api/get-room/<int:room_id>/', views.get_room_data, name='get_room_data'),
     path('api/get-all-rooms/', views.get_all_rooms, name='get_all_rooms'),
     path('api/toggle-room-status/<int:room_id>/', views.toggle_room_status, name='toggle_room_status'),
-
     path('api/booking-form/<int:room_id>/', views.booking_form, name='booking_form'),
 ]
+
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

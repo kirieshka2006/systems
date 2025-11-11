@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Техподдержка</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        .support-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .support-header {
+            background: #2d2d2d;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border: 1px solid #404040;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 12px 20px;
+            background: #2d2d2d;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid #404040;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            background: #007bff;
+            border-color: #007bff;
+        }
+        .tab-content {
+            display: none;
+            background: #2d2d2d;
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid #404040;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .ticket-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .ticket-item {
+            background: #3a3a3a;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #555;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .ticket-item:hover {
+            background: #4a4a4a;
+            transform: translateX(5px);
+        }
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .ticket-subject {
+            font-weight: bold;
+            color: #fff;
+            font-size: 16px;
+        }
+        .ticket-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-open { background: #dc3545; color: white; }
+        .status-in_progress { background: #ffc107; color: black; }
+        .status-closed { background: #28a745; color: white; }
+        .ticket-meta {
+            color: #ccc;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .ticket-message {
+            color: #e0e0e0;
+            line-height: 1.5;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+            font-weight: bold;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background: #3a3a3a;
+            border: 1px solid #555;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .response-section {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #555;
+        }
+        .response-item {
+            background: #3a3a3a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #007bff;
+        }
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            color: #ccc;
+            font-size: 14px;
+        }
+        .no-tickets {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-style: italic;
+        }
+                .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #404040;
+            border-radius: 8px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .back-btn:hover {
+            background: #3a3a3a;
+            border-color: #007bff;
+        }
+    </style>
+</head>
+<body>
+<a href="{% url 'home' %}" class="back-btn">← Назад на главную</a>
+    <div class="support-container">
+        <div class="support-header">
+            <h1>🛠️ Техподдержка</h1>
+            <p>Здесь вы можете задать вопрос нашей службе поддержки</p>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="new-ticket">📝 Новый вопрос</div>
+            <div class="tab" data-tab="my-tickets">📨 Мои обращения</div>
+            {% if user.role in 'admin manager' %}
+            <div class="tab" data-tab="all-tickets">👥 Все обращения</div>
+            {% endif %}
+        </div>
+
+        <!-- ФОРМА НОВОГО ВОПРОСА -->
+        <div id="new-ticket" class="tab-content active">
+            <h3>📝 Задать новый вопрос</h3>
+            <form method="POST" action="{% url 'create_ticket' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Тема вопроса</label>
+                    <input type="text" name="subject" required placeholder="Опишите кратко суть проблемы">
+                </div>
+                <div class="form-group">
+                    <label>Подробное описание</label>
+                    <textarea name="message" required placeholder="Опишите вашу проблему подробно..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">📤 Отправить вопрос</button>
+            </form>
+        </div>
+
+        <!-- МОИ ОБРАЩЕНИЯ -->
+        <div id="my-tickets" class="tab-content">
+            <h3>📨 Мои обращения</h3>
+            <div class="ticket-list">
+                {% for ticket in my_tickets %}
+                <div class="ticket-item" onclick="openTicket({{ ticket.id }})">
+                    <div class="ticket-header">
+                        <div class="ticket-subject">{{ ticket.subject }}</div>
+                        <div class="ticket-status status-{{ ticket.status }}">{{ ticket.get_status_display }}</div>
+                    </div>
+                    <div class="ticket-meta">
+                        📅 {{ ticket.created_at|date:"d.m.Y H:i" }} |
+                        💬 Ответов: {{ ticket.responses.count }}
+                    </div>
+                    <div class="ticket-message">{{ ticket.message|truncatewords:30 }}</div>
+                </div>
+                {% empty %}
+                <div class="no-tickets">
+                    📭 У вас пока нет обращений в техподдержку
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if user.role in 'admin manager' %}
+        <!-- ВСЕ ОБРАЩЕНИЯ (для менеджеров и админов) -->
+        <div id="all-tickets" class="tab-content">
+            <h3>👥 Все обращения пользователей</h3>
+            <div class="ticket-list">
+                {% for ticket in all_tickets %}
+                <div class="ticket-item" onclick="openTicket({{ ticket.id }})">
+                    <div class="ticket-header">
+                        <div class="ticket-subject">
+                            👤 {{ ticket.user.username }}: {{ ticket.subject }}
+                        </div>
+                        <div class="ticket-status status-{{ ticket.status }}">{{ ticket.get_status_display }}</div>
+                    </div>
+                    <div class="ticket-meta">
+                        📅 {{ ticket.created_at|date:"d.m.Y H:i" }} |
+                        💬 Ответов: {{ ticket.responses.count }}
+                    </div>
+                    <div class="ticket-message">{{ ticket.message|truncatewords:30 }}</div>
+                </div>
+                {% empty %}
+                <div class="no-tickets">
+                    📭 Нет обращений от пользователей
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ПРОСМОТРА ТИКЕТА -->
+    <div id="ticketModal" class="modal">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <span class="close" onclick="closeTicketModal()" style="float: right; font-size: 24px; cursor: pointer; color: #ccc;">&times;</span>
+            <div id="ticketModalContent">
+                <!-- Сюда будет загружаться содержимое тикета -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Переключение табов
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Открытие тикета
+        function openTicket(ticketId) {
+            fetch(`/support/ticket/${ticketId}/`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('ticketModalContent').innerHTML = html;
+                    document.getElementById('ticketModal').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                });
+        }
+
+        function closeTicketModal() {
+            document.getElementById('ticketModal').style.display = 'none';
+        }
+
+        // Закрытие модального окна при клике вне его
+        window.onclick = function(event) {
+            const modal = document.getElementById('ticketModal');
+            if (event.target === modal) {
+                closeTicketModal();
+            }
+        }
+    </script>
+</body>
+</html>

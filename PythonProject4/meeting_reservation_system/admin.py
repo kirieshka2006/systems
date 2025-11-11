@@ -1,9 +1,22 @@
 from django.contrib import admin
-from .models import User, Room, Booking
+from .models import User, Room, Booking, SupportTicket, TicketResponse
+
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ['username', 'email', 'role', 'phone']
+
+
+@admin.register(SupportTicket)
+class SupportTicketAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'subject', 'status', 'created_at']
+    list_filter = ['status', 'created_at']
+    search_fields = ['user__username', 'subject']
+
+
+@admin.register(TicketResponse)
+class TicketResponseAdmin(admin.ModelAdmin):
+    list_display = ['ticket', 'user', 'created_at']
 
 
 @admin.register(Room)

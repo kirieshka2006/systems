@@ -5,6 +5,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+
 class User(AbstractUser):
     ROLE_CHOICES = [
         ('admin', 'Администратор'),
@@ -24,10 +25,10 @@ class User(AbstractUser):
     email_verified = models.BooleanField(default=False)
 
     # ★★★ НОВЫЕ ПОЛЯ ★★★
-    first_name = models.CharField(max_length=30, blank=True)      # Имя
-    last_name = models.CharField(max_length=30, blank=True)       # Фамилия
-    patronymic = models.CharField(max_length=30, blank=True)      # Отчество
-    birth_date = models.DateField(null=True, blank=True)          # Дата рождения
+    first_name = models.CharField(max_length=30, blank=True)  # Имя
+    last_name = models.CharField(max_length=30, blank=True)  # Фамилия
+    patronymic = models.CharField(max_length=30, blank=True)  # Отчество
+    birth_date = models.DateField(null=True, blank=True)  # Дата рождения
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True)  # Пол
 
     # Добавляем related_name чтобы избежать конфликтов
@@ -47,6 +48,34 @@ class User(AbstractUser):
         related_name='custom_user_set',  # ← ИЗМЕНИЛ
         related_query_name='user',
     )
+
+
+class SupportTicket(models.Model):
+    STATUS_CHOICES = [
+        ('open', '🔴 Открыт'),
+        ('in_progress', '🟡 В работе'),
+        ('closed', '🟢 Закрыт'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tickets')
+    subject = models.CharField(max_length=200, verbose_name="Тема вопроса")
+    message = models.TextField(verbose_name="Сообщение")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.subject}"
+
+
+class TicketResponse(models.Model):
+    ticket = models.ForeignKey(SupportTicket, on_delete=models.CASCADE, related_name='responses')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Ответивший")
+    message = models.TextField(verbose_name="Ответ")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Ответ на {self.ticket.subject}"
 
 
 class Room(models.Model):
@@ -98,21 +127,6 @@ class Room(models.Model):
         mid = (len(items) + 1) // 2  # Делим пополам
         return items[:mid], items[mid:]
 
-    @property
-    def equipment_list(self):
-        """Возвращает список оборудования"""
-        if self.equipment:
-            return [item.strip() for item in self.equipment.split('\n') if item.strip()]
-        return []
-
-    def get_equipment_columns(self):
-        """Разделяет оборудование на две колонки"""
-        items = self.equipment_list
-        if not items:
-            return [], []
-
-        mid = (len(items) + 1) // 2  # Делим пополам
-        return items[:mid], items[mid:]
 
 class EmailConfirmation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='email_confirmations')

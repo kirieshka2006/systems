@@ -9,6 +9,96 @@ from django.utils import timezone
 from .models import Room, User, EmailConfirmation, Booking
 from django.http import JsonResponse
 from datetime import datetime, timedelta
+from .models import SupportTicket, TicketResponse
+
+@login_required
+def ticket_response_form(request, ticket_id):
+    """Возвращает HTML форму для ответа на тикет"""
+    try:
+        ticket = SupportTicket.objects.get(id=ticket_id)
+        return render(request, 'ticket_response_form.html', {'ticket': ticket})
+    except SupportTicket.DoesNotExist:
+        return JsonResponse({'error': 'Тикет не найден'}, status=404)
+
+def support_view(request):
+    """Страница техподдержки"""
+    context = {
+        'my_tickets': SupportTicket.objects.filter(user=request.user).order_by(
+            '-created_at') if request.user.is_authenticated else [],
+    }
+
+    if request.user.is_authenticated and request.user.role in ['admin', 'manager']:
+        context['all_tickets'] = SupportTicket.objects.all().order_by('-created_at')
+
+    return render(request, 'support.html', context)
+
+
+@login_required
+def create_ticket(request):
+    """Создание нового тикета"""
+    if request.method == 'POST':
+        subject = request.POST.get('subject')
+        message = request.POST.get('message')
+
+        ticket = SupportTicket.objects.create(
+            user=request.user,
+            subject=subject,
+            message=message
+        )
+        messages.success(request, '✅ Ваш вопрос отправлен в техподдержку!')
+
+    return redirect('support')
+
+
+@login_required
+def ticket_detail(request, ticket_id):
+    """Детальная страница тикета"""
+    try:
+        ticket = SupportTicket.objects.get(id=ticket_id)
+
+        # Проверяем доступ
+        if request.user.role not in ['admin', 'manager'] and ticket.user != request.user:
+            messages.error(request, '❌ Доступ запрещен!')
+            return redirect('support')
+
+        if request.method == 'POST':
+            response_text = request.POST.get('response')
+            if response_text:
+                TicketResponse.objects.create(
+                    ticket=ticket,
+                    user=request.user,
+                    message=response_text
+                )
+                # Обновляем статус если отвечает менеджер/админ
+                if request.user.role in ['admin', 'manager']:
+                    ticket.status = 'in_progress'
+                    ticket.save()
+                messages.success(request, '✅ Ответ отправлен!')
+
+        return render(request, 'ticket_detail.html', {'ticket': ticket})
+
+    except SupportTicket.DoesNotExist:
+        messages.error(request, '❌ Обращение не найдено!')
+        return redirect('support')
+
+
+@login_required
+def update_ticket_status(request, ticket_id):
+    """Обновление статуса тикета (для менеджеров)"""
+    if request.user.role not in ['admin', 'manager']:
+        return JsonResponse({'success': False, 'error': 'Доступ запрещен'})
+
+    try:
+        ticket = SupportTicket.objects.get(id=ticket_id)
+        new_status = request.POST.get('status')
+        if new_status in dict(SupportTicket.STATUS_CHOICES):
+            ticket.status = new_status
+            ticket.save()
+            return JsonResponse({'success': True})
+    except SupportTicket.DoesNotExist:
+        pass
+
+    return JsonResponse({'success': False, 'error': 'Ошибка обновления'})
 
 
 def login_view(request):
