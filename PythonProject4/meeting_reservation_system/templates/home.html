@@ -27,7 +27,14 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             border: 1px solid #404040;
             transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
+.room-card .btn {
+    display: block;
+    margin: 15px auto 0 auto; /* центрирует кнопку */
+}
         .room-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 6px 20px rgba(0,0,0,0.4);
