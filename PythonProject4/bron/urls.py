@@ -27,7 +27,9 @@ urlpatterns = [
     path('support/', views.support_view, name='support'),
     path('support/create-ticket/', views.create_ticket, name='create_ticket'),
     path('support/ticket/<int:ticket_id>/', views.ticket_detail, name='ticket_detail'),
-    path('support/ticket/<int:ticket_id>/update-status/', views.update_ticket_status, name='update_ticket_status'),
+    path('support/ticket/<int:ticket_id>/close/', views.close_ticket, name='close_ticket'),
+    path('support/ticket/<int:ticket_id>/check-status/', views.check_ticket_status, name='check_ticket_status'),
+    path('support/ticket/<int:ticket_id>/delete/', views.delete_ticket, name='delete_ticket'),
 
     path('api/available-rooms/', views.get_available_rooms, name='available_rooms'),
     path('api/create-booking/', views.create_booking, name='create_booking'),

@@ -47,8 +47,28 @@ def create_ticket(request):
         )
         messages.success(request, '✅ Ваш вопрос отправлен в техподдержку!')
 
+        # ★★★ ПРАВИЛЬНЫЙ РЕДИРЕКТ С ЯКОРЕМ ★★★
+        from django.http import HttpResponseRedirect
+        from django.urls import reverse
+        return HttpResponseRedirect(reverse('support') + '#my-tickets')
+
     return redirect('support')
 
+
+def support_view(request):
+    """Страница техподдержки с FAQ"""
+    from .models import FAQ
+    context = {
+        'my_tickets': SupportTicket.objects.filter(user=request.user).order_by(
+            '-created_at') if request.user.is_authenticated else [],
+        'faqs': FAQ.objects.filter(is_active=True),
+        'faq_categories': FAQ.CATEGORY_CHOICES,  # ★★★ ДОБАВИЛ КАТЕГОРИИ ★★★
+    }
+
+    if request.user.is_authenticated and request.user.role in ['admin', 'manager']:
+        context['all_tickets'] = SupportTicket.objects.all().order_by('-created_at')
+
+    return render(request, 'support.html', context)
 
 @login_required
 def ticket_detail(request, ticket_id):
@@ -56,23 +76,31 @@ def ticket_detail(request, ticket_id):
     try:
         ticket = SupportTicket.objects.get(id=ticket_id)
 
-        # Проверяем доступ
-        if request.user.role not in ['admin', 'manager'] and ticket.user != request.user:
+        # Проверяем доступ - разрешаем автору и менеджерам/админам
+        if ticket.user != request.user and request.user.role not in ['admin', 'manager']:
             messages.error(request, '❌ Доступ запрещен!')
             return redirect('support')
 
         if request.method == 'POST':
             response_text = request.POST.get('response')
             if response_text:
+                # Проверяем что тикет не закрыт
+                if ticket.status == 'closed':
+                    messages.error(request, '❌ Тикет закрыт! Новые ответы невозможны.')
+                    return redirect('support')
+
                 TicketResponse.objects.create(
                     ticket=ticket,
                     user=request.user,
                     message=response_text
                 )
-                # Обновляем статус если отвечает менеджер/админ
+
+                # Обновляем статус и активность
                 if request.user.role in ['admin', 'manager']:
                     ticket.status = 'in_progress'
-                    ticket.save()
+                ticket.last_activity = timezone.now()
+                ticket.save()
+
                 messages.success(request, '✅ Ответ отправлен!')
 
         return render(request, 'ticket_detail.html', {'ticket': ticket})
@@ -80,7 +108,6 @@ def ticket_detail(request, ticket_id):
     except SupportTicket.DoesNotExist:
         messages.error(request, '❌ Обращение не найдено!')
         return redirect('support')
-
 
 @login_required
 def update_ticket_status(request, ticket_id):
@@ -99,6 +126,59 @@ def update_ticket_status(request, ticket_id):
         pass
 
     return JsonResponse({'success': False, 'error': 'Ошибка обновления'})
+
+
+@login_required
+def close_ticket(request, ticket_id):
+    """Закрытие тикета пользователем"""
+    try:
+        ticket = SupportTicket.objects.get(id=ticket_id)
+
+        # Проверяем что пользователь является автором тикета
+        if ticket.user != request.user:
+            messages.error(request, '❌ Вы можете закрывать только свои обращения!')
+            return redirect('support')
+
+        # Меняем статус на закрытый
+        ticket.status = 'closed'
+        ticket.save()
+
+        messages.success(request, '✅ Тикет закрыт! Спасибо за обращение.')
+        return redirect('support')
+
+    except SupportTicket.DoesNotExist:
+        messages.error(request, '❌ Обращение не найдено!')
+        return redirect('support')
+
+
+@login_required
+def delete_ticket(request, ticket_id):
+    """Удаление тикета менеджером/админом"""
+    if request.user.role not in ['admin', 'manager']:
+        return JsonResponse({'success': False, 'error': 'Доступ запрещен'})
+
+    try:
+        ticket = SupportTicket.objects.get(id=ticket_id)
+
+        # ★★★ ПРОВЕРЯЕМ ЧТО ТИКЕТ НЕ В СТАТУСЕ "ОТКРЫТ" ★★★
+        if ticket.status == 'open':
+            return JsonResponse({'success': False, 'error': 'Нельзя удалять открытые тикеты'})
+
+        ticket.delete()
+        return JsonResponse({'success': True})
+
+    except SupportTicket.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Тикет не найден'})
+
+@login_required
+def check_ticket_status(request, ticket_id):
+    """Проверка статуса тикета для AJAX"""
+    try:
+        ticket = SupportTicket.objects.get(id=ticket_id)
+        return JsonResponse({'status': ticket.status})
+    except SupportTicket.DoesNotExist:
+        return JsonResponse({'status': 'not_found'})
+
 
 
 def login_view(request):

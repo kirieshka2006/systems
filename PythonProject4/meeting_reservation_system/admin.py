@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Room, Booking, SupportTicket, TicketResponse
+from .models import User, Room, Booking, SupportTicket, TicketResponse, FAQ
 
 
 @admin.register(User)
@@ -18,6 +18,11 @@ class SupportTicketAdmin(admin.ModelAdmin):
 class TicketResponseAdmin(admin.ModelAdmin):
     list_display = ['ticket', 'user', 'created_at']
 
+@admin.register(FAQ)
+class FAQAdmin(admin.ModelAdmin):
+    list_display = ['question', 'category', 'order', 'is_active']
+    list_filter = ['category', 'is_active']
+    search_fields = ['question', 'answer']
 
 @admin.register(Room)
 class RoomAdmin(admin.ModelAdmin):

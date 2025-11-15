@@ -22,6 +22,30 @@
             margin-bottom: 25px;
             border: 1px solid #404040;
         }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+        }
+
+        .modal-content {
+            background: #2d2d2d;
+            margin: 1% auto;
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid #404040;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
         .tabs {
             display: flex;
             gap: 10px;
@@ -40,15 +64,16 @@
             border-color: #007bff;
         }
         .tab-content {
-            display: none;
-            background: #2d2d2d;
-            padding: 25px;
-            border-radius: 10px;
-            border: 1px solid #404040;
-        }
-        .tab-content.active {
-            display: block;
-        }
+    display: none;           /* ★★★ ВСЕ вкладки скрыты по умолчанию ★★★ */
+    background: #2d2d2d;
+    padding: 25px;
+    border-radius: 10px;
+    border: 1px solid #404040;
+}
+
+.tab-content.active {
+    display: block;          /* ★★★ ТОЛЬКО активная вкладка показывается ★★★ */
+}
         .ticket-list {
             display: flex;
             flex-direction: column;
@@ -83,9 +108,7 @@
             font-size: 12px;
             font-weight: bold;
         }
-        .status-open { background: #dc3545; color: white; }
-        .status-in_progress { background: #ffc107; color: black; }
-        .status-closed { background: #28a745; color: white; }
+
         .ticket-meta {
             color: #ccc;
             font-size: 14px;
@@ -129,6 +152,7 @@
             cursor: pointer;
             font-size: 14px;
             transition: background 0.3s;
+            text-decoration: none
         }
         .btn:hover {
             background: #0056b3;
@@ -139,25 +163,10 @@
         .btn-success:hover {
             background: #218838;
         }
-        .response-section {
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 1px solid #555;
-        }
-        .response-item {
-            background: #3a3a3a;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border-left: 4px solid #007bff;
-        }
-        .response-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            color: #ccc;
-            font-size: 14px;
-        }
+        .btn-delete-small:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(220,53,69,0.3);
+}
         .no-tickets {
             text-align: center;
             color: #999;
@@ -182,24 +191,310 @@
             background: #3a3a3a;
             border-color: #007bff;
         }
+        /* Стили для FAQ */
+        .faq-categories {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .faq-item {
+            margin-bottom: 10px;
+            border: 1px solid #404040;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            background: #3a3a3a;
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .faq-question:hover {
+            background: #4a4a4a;
+        }
+
+        .faq-toggle {
+            transition: transform 0.3s ease;
+            color: #007bff;
+        }
+
+        .faq-answer {
+            display: none;
+            background: #2d2d2d;
+        }
+
+        .faq-item.active .faq-question {
+            background: #007bff;
+        }
+
+        .faq-item.active .faq-toggle {
+            transform: rotate(90deg);
+        }
+
+        .faq-item.active .faq-answer {
+            display: block;
+        }
+        /*конец поддержка*/
     </style>
 </head>
 <body>
 <a href="{% url 'home' %}" class="back-btn">← Назад на главную</a>
     <div class="support-container">
         <div class="support-header">
-            <h1>🛠️ Техподдержка</h1>
+            <h1>🛠️❓FAQ/Техподдержка❓🛠️</h1>
             <p>Здесь вы можете задать вопрос нашей службе поддержки</p>
         </div>
 
         <div class="tabs">
-            <div class="tab active" data-tab="new-ticket">📝 Новый вопрос</div>
-            <div class="tab" data-tab="my-tickets">📨 Мои обращения</div>
+            <div class="tab active" data-tab="faq" id="tab-faq">❓ Частые вопросы (FAQ)</div>
+            <div class="tab" data-tab="new-ticket" id="tab-new-ticket">📝 Новый вопрос</div>
+            <div class="tab" data-tab="my-tickets" id="tab-my-tickets">📨 Мои обращения</div>
             {% if user.role in 'admin manager' %}
-            <div class="tab" data-tab="all-tickets">👥 Все обращения</div>
+            <div class="tab" data-tab="all-tickets" id="tab-all-tickets">👥 Все обращения</div>
             {% endif %}
         </div>
+<!-- FAQ -->
+<div id="faq" class="tab-content active">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h3>❓ Часто задаваемые вопросы</h3>
+        <p style="color: #ccc; font-size: 16px;">Всё что нужно знать о бронировании переговорных комнат</p>
+    </div>
 
+    <!-- Поиск по FAQ -->
+    <div style="margin-bottom: 30px; position: relative;">
+        <input type="text" id="faqSearch" placeholder="🔍 Поиск по вопросам..."
+               style="width: 93%; padding: 15px 45px 15px 15px; background: #3a3a3a; border: 2px solid #555;
+                      border-radius: 12px; color: #fff; font-size: 16px; transition: all 0.3s ease;">
+        <div style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #999;">
+            ⌨️
+        </div>
+    </div>
+
+    <!-- Статистика -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+        <div style="background: linear-gradient(135deg, #007bff, #0056b3); padding: 20px; border-radius: 12px; text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 5px;">🕒</div>
+            <div style="font-weight: bold; color: white;">24/7</div>
+            <div style="font-size: 12px; color: #e0e0e0;">Бронирование</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #28a745, #218838); padding: 20px; border-radius: 12px; text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 5px;">💰</div>
+            <div style="font-weight: bold; color: white;">От 500₽/час</div>
+            <div style="font-size: 12px; color: #e0e0e0;">Стоимость</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #6f42c1, #5a2d91); padding: 20px; border-radius: 12px; text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 5px;">👥</div>
+            <div style="font-weight: bold; color: white;">2-20 чел.</div>
+            <div style="font-size: 12px; color: #e0e0e0;">Вместимость</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #fd7e14, #e55a00); padding: 20px; border-radius: 12px; text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 5px;">✅</div>
+            <div style="font-weight: bold; color: white;">Мгновенно</div>
+            <div style="font-size: 12px; color: #e0e0e0;">Подтверждение</div>
+        </div>
+    </div>
+
+        <!-- Категории FAQ -->
+        <div class="faq-categories">
+            <!-- БРОНИРОВАНИЕ -->
+            <div class="faq-category">
+                <h4 style="color: #fff; background: linear-gradient(135deg, #007bff, #0056b3); padding: 15px 20px; border-radius: 10px; margin-bottom: 20px;">
+                    📅 Процесс бронирования
+                </h4>
+                <div class="faq-items">
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(1)">
+                            <span>🤔 Как забронировать переговорную комнату?</span>
+                            <span class="faq-toggle">▶</span>
+                        </div>
+                        <div class="faq-answer" id="faq-answer-1">
+                            <div style="padding: 20px; background: #3a3a3a; border-radius: 8px; margin-top: 10px; line-height: 1.6;">
+                                <strong>Процесс бронирования:</strong><br><br>
+                                1. <strong>Выберите комнату</strong> - на главной странице<br>
+                                2. <strong>Нажмите "Забронировать"</strong><br>
+                                3. <strong>Укажите дату и время</strong> встречи<br>
+                                4. <strong>Выберите продолжительность</strong> (от 1 часа)<br>
+                                5. <strong>Подтвердите бронирование</strong><br><br>
+                                ✅ Бронирование подтверждается после ответа менеджера!
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(2)">
+                            <span>⏰ За сколько времени можно забронировать?</span>
+                            <span class="faq-toggle">▶</span>
+                        </div>
+                        <div class="faq-answer" id="faq-answer-2">
+                            <div style="padding: 20px; background: #3a3a3a; border-radius: 8px; margin-top: 10px; line-height: 1.6;">
+                                <strong>Сроки бронирования:</strong><br><br>
+                                • <strong>Минимум</strong> - за 1 час до начала<br>
+                                • <strong>Максимум</strong> - за 30 дней вперед<br>
+                                • <strong>Рекомендуем</strong> бронировать за 1-3 дня<br><br>
+                                🚨 В часы пик (10:00-12:00, 14:00-16:00) бронируйте заранее!
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(3)">
+                            <span>❌ Можно ли отменить бронирование?</span>
+                            <span class="faq-toggle">▶</span>
+                        </div>
+                        <div class="faq-answer" id="faq-answer-3">
+                            <div style="padding: 20px; background: #3a3a3a; border-radius: 8px; margin-top: 10px; line-height: 1.6;">
+                                <strong>Политика отмены:</strong><br><br>
+                                ✅ <strong>Бесплатная отмена</strong> - за 2 часа до начала<br>
+                                ⚠️ <strong>50% стоимости</strong> - при отмене менее чем за 2 часа<br>
+                                ❌ <strong>Без возврата</strong> - при неявке<br><br>
+                                💡 Для отмены напишите в техподдержку
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ОПЛАТА -->
+            <div class="faq-category">
+                <h4 style="color: #fff; background: linear-gradient(135deg, #28a745, #218838); padding: 15px 20px; border-radius: 10px; margin-bottom: 20px;">
+                    💳 Оплата и стоимость
+                </h4>
+                <div class="faq-items">
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(4)">
+                            <span>💰 Как рассчитывается стоимость?</span>
+                            <span class="faq-toggle">▶</span>
+                        </div>
+                        <div class="faq-answer" id="faq-answer-4">
+                            <div style="padding: 20px; background: #3a3a3a; border-radius: 8px; margin-top: 10px; line-height: 1.6;">
+                                <strong>Формирование стоимости:</strong><br><br>
+                                • <strong>Почасовая оплата</strong> - от 500₽/час<br>
+                                • <strong>Категория комнаты</strong> - эконом/стандарт/комфорт/VIP<br>
+                                • <strong>Продолжительность</strong> - округление до 30 минут<br>
+                                • <strong>Доп. услуги</strong> - проектор, флипчарт и т.д.<br><br>
+                                💰 Итоговая сумма показывается перед подтверждением
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(5)">
+                            <span>💵 Какие способы оплаты доступны?</span>
+                            <span class="faq-toggle">▶</span>
+                        </div>
+                        <div class="faq-answer" id="faq-answer-5">
+                            <div style="padding: 20px; background: #3a3a3a; border-radius: 8px; margin-top: 10px; line-height: 1.6;">
+                                <strong>Доступные способы оплаты:</strong><br><br>
+                                • 💳 <strong>Банковская карта</strong> (Visa, MasterCard, МИР)<br>
+                                • 📱 <strong>Электронные кошельки</strong> (ЮMoney, Qiwi)<br>
+                                • 🏢 <strong>Безналичный расчет</strong> для юр. лиц<br>
+                                • 💰 <strong>Наличные</strong> в день встречи<br><br>
+                                🔒 Все платежи защищены SSL-шифрованием
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ОБОРУДОВАНИЕ -->
+            <div class="faq-category">
+                <h4 style="color: #fff; background: linear-gradient(135deg, #fd7e14, #e55a00); padding: 15px 20px; border-radius: 10px; margin-bottom: 20px;">
+                    🛠️ Оборудование и возможности
+                </h4>
+                <div class="faq-items">
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(6)">
+                            <span>🎯 Какое оборудование есть в комнатах?</span>
+                            <span class="faq-toggle">▶</span>
+                        </div>
+                        <div class="faq-answer" id="faq-answer-6">
+                            <div style="padding: 20px; background: #3a3a3a; border-radius: 8px; margin-top: 10px; line-height: 1.6;">
+                                <strong>Стандартное оборудование:</strong><br><br>
+                                • 🪑 <strong>Мебель</strong> - столы, эргономичные кресла<br>
+                                • 📺 <strong>Техника</strong> - проектор, экран, TV<br>
+                                • 📡 <strong>Интернет</strong> - Wi-Fi 100 Мбит/с<br>
+                                • ☕ <strong>Кулер</strong> - вода, чай, кофе<br>
+                                • 🖊️ <strong>Канцелярия</strong> - флипчарт, маркеры<br><br>
+                                🔍 Подробности в описании каждой комнаты
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(7)">
+                            <span>🔌 Есть ли розетки и USB-порты?</span>
+                            <span class="faq-toggle">▶</span>
+                        </div>
+                        <div class="faq-answer" id="faq-answer-7">
+                            <div style="padding: 20px; background: #3a3a3a; border-radius: 8px; margin-top: 10px; line-height: 1.6;">
+                                <strong>Электропитание:</strong><br><br>
+                                ✅ <strong>Розетки</strong> - 4-8 шт. в каждой комнате<br>
+                                ✅ <strong>USB-порты</strong> - для зарядки устройств<br>
+                                ✅ <strong>Удлинители</strong> - по запросу<br>
+                                ✅ <strong>220V</strong> - стандартное напряжение<br><br>
+                                💡 Все розетки расположены в удобных местах
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ПРАВИЛА -->
+            <div class="faq-category">
+                <h4 style="color: #fff; background: linear-gradient(135deg, #6f42c1, #5a2d91); padding: 15px 20px; border-radius: 10px; margin-bottom: 20px;">
+                    📋 Правила использования
+                </h4>
+                <div class="faq-items">
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(8)">
+                            <span>⏱️ Что если я опоздаю на встречу?</span>
+                            <span class="faq-toggle">▶</span>
+                        </div>
+                        <div class="faq-answer" id="faq-answer-8">
+                            <div style="padding: 20px; background: #3a3a3a; border-radius: 8px; margin-top: 10px; line-height: 1.6;">
+                                <strong>Политика опозданий:</strong><br><br>
+                                • ⏰ <strong>До 15 минут</strong> - комната сохраняется<br>
+                                • ⚠️ <strong>15-30 минут</strong> - время не продлевается<br>
+                                • ❌ <strong>Более 30 минут</strong> - бронь аннулируется<br><br>
+                                📞 При опоздании предупредите администратора
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(9)">
+                            <span>👥 Можно ли привести больше людей?</span>
+                            <span class="faq-toggle">▶</span>
+                        </div>
+                        <div class="faq-answer" id="faq-answer-9">
+                            <div style="padding: 20px; background: #3a3a3a; border-radius: 8px; margin-top: 10px; line-height: 1.6;">
+                                <strong>Вместимость комнат:</strong><br><br>
+                                • ✅ <strong>+1-2 человека</strong> - обычно возможно<br>
+                                • ⚠️ <strong>Больше лимита</strong> - требуется согласование<br>
+                                • 🔒 <strong>Противопожарные нормы</strong> - строго соблюдаются<br><br>
+                                📞 Уточняйте возможность у администратора
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA Блок -->
+        <div style="background: linear-gradient(135deg, #2d2d2d, #404040); padding: 30px; border-radius: 15px; border: 2px solid #007bff; text-align: center; margin-top: 40px;">
+            <h4 style="color: #fff; margin-bottom: 15px;">💬 Не нашли ответ?</h4>
+            <p style="color: #ccc; margin-bottom: 20px;">Наша техподдержка ответит на любой ваш вопрос</p>
+            <button onclick="switchToTab('new-ticket')" style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; padding: 15px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; transition: all 0.3s ease;">
+                📝 Задать вопрос в техподдержку
+            </button>
+        </div>
+    </div>
         <!-- ФОРМА НОВОГО ВОПРОСА -->
         <div id="new-ticket" class="tab-content active">
             <h3>📝 Задать новый вопрос</h3>
@@ -247,18 +542,30 @@
             <h3>👥 Все обращения пользователей</h3>
             <div class="ticket-list">
                 {% for ticket in all_tickets %}
-                <div class="ticket-item" onclick="openTicket({{ ticket.id }})">
+                <div class="ticket-item">
                     <div class="ticket-header">
-                        <div class="ticket-subject">
+                        <div class="ticket-subject" style="flex: 1; cursor: pointer;" onclick="openTicket({{ ticket.id }})">
                             👤 {{ ticket.user.username }}: {{ ticket.subject }}
                         </div>
-                        <div class="ticket-status status-{{ ticket.status }}">{{ ticket.get_status_display }}</div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <div class="ticket-status status-{{ ticket.status }}">{{ ticket.get_status_display }}</div>
+                            {% if ticket.status != 'open' %}
+                            <button class="btn-delete-small" onclick="event.stopPropagation(); confirmDeleteFromList({{ ticket.id }})"
+                                    style="background: #dc3545; color: white; padding: 6px 10px; border: none;
+                                           border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;
+                                           transition: all 0.3s ease;">
+                                🗑️ Удалить
+                            </button>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="ticket-meta">
-                        📅 {{ ticket.created_at|date:"d.m.Y H:i" }} |
-                        💬 Ответов: {{ ticket.responses.count }}
+                    <div style="cursor: pointer;" onclick="openTicket({{ ticket.id }})">
+                        <div class="ticket-meta">
+                            📅 {{ ticket.created_at|date:"d.m.Y H:i" }} |
+                            💬 Ответов: {{ ticket.responses.count }}
+                        </div>
+                        <div class="ticket-message">{{ ticket.message|truncatewords:30 }}</div>
                     </div>
-                    <div class="ticket-message">{{ ticket.message|truncatewords:30 }}</div>
                 </div>
                 {% empty %}
                 <div class="no-tickets">
@@ -281,6 +588,67 @@
     </div>
 
     <script>
+        // Функция переключения на другую вкладку
+function switchToTab(tabName) {
+    // Снимаем активные классы
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => {
+        c.classList.remove('active');
+        c.style.display = 'none'; // ★★★ ДОБАВЬ ЭТУ СТРОКУ ★★★
+    });
+
+    // Активируем нужную вкладку
+    const tab = document.querySelector(`[data-tab="${tabName}"]`);
+    const content = document.getElementById(tabName);
+
+    if (tab && content) {
+        tab.classList.add('active');
+        content.classList.add('active');
+        content.style.display = 'block'; // ★★★ ДОБАВЬ ЭТУ СТРОКУ ★★★
+    }
+
+    // ★★★ ОБНОВЛЯЕМ URL С ЯКОРЕМ ★★★
+    window.history.pushState(null, null, `#${tabName}`);
+}
+        function toggleFAQ(faqId) {
+    const faqItem = document.querySelector(`#faq-answer-${faqId}`).parentElement;
+    const isActive = faqItem.classList.contains('active');
+
+    // Закрываем все FAQ
+    document.querySelectorAll('.faq-item').forEach(item => {
+        item.classList.remove('active');
+    });
+
+    // Открываем текущий если был закрыт
+    if (!isActive) {
+        faqItem.classList.add('active');
+    }
+}
+
+// Поиск по FAQ
+document.getElementById('faqSearch').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const faqItems = document.querySelectorAll('.faq-item');
+
+    faqItems.forEach(item => {
+        const question = item.querySelector('.faq-question').textContent.toLowerCase();
+        if (question.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+});
+
+// Автоматически открываем первый FAQ в каждой категории при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.faq-category').forEach(category => {
+        const firstFaq = category.querySelector('.faq-item');
+        if (firstFaq) {
+            firstFaq.classList.add('active');
+        }
+    });
+});
         // Переключение табов
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
@@ -316,6 +684,193 @@
                 closeTicketModal();
             }
         }
+        function confirmDeleteFromList(ticketId) {
+    if (confirm('❌ Удалить этот тикет?\n\nЭто действие нельзя отменить!')) {
+        fetch(`/support/ticket/${ticketId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('✅ Тикет удален!', 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification('❌ ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            showNotification('❌ Ошибка при удалении', 'error');
+        });
+    }
+}
+
+// Функция уведомлений (если еще нет)
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        z-index: 10000;
+        ${type === 'success' ? 'background: #28a745;' : 'background: #dc3545;'}
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
     </script>
+<!-- МОДАЛЬНОЕ ОКНО ДЛЯ ОТВЕТА -->
+<div id="responseModal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h3 style="margin: 0; color: #fff;">💬 Ответ на обращение</h3>
+            <span class="close" onclick="closeResponseModal()" style="font-size: 28px; cursor: pointer; color: #ccc; padding: 5px;">&times;</span>
+        </div>
+
+        <div style="background: #3a3a3a; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+            <strong style="color: #fff;">Обращение:</strong>
+            <div style="color: #ccc; margin-top: 10px;" id="responseTicketSubject"></div>
+        </div>
+
+        <form method="POST" id="responseForm">
+            {% csrf_token %}
+            <input type="hidden" name="ticket_id" id="responseTicketId">
+            <div class="form-group">
+                <label style="display: block; margin-bottom: 10px; color: #ccc; font-weight: bold;">Ваш ответ</label>
+                <textarea name="response" required
+                          placeholder="Напишите подробный ответ пользователю..."
+                          style="width: 100%; min-height: 200px; padding: 15px; background: #3a3a3a; border: 1px solid #555; border-radius: 10px; color: #fff; font-size: 14px; line-height: 1.5; resize: vertical;"></textarea>
+            </div>
+            <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px;">
+                <button type="button" class="btn-cancel" onclick="closeResponseModal()" style="background: #6c757d; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer;">
+                    ❌ Отмена
+                </button>
+                <button type="submit" class="btn-send" style="background: #28a745; color: white; padding: 12px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    📤 Отправить ответ
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Функции для модального окна ответа
+function showResponseForm(ticketId, ticketSubject) {
+    // Проверяем не закрыт ли тикет
+    fetch(`/support/ticket/${ticketId}/check-status/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'closed') {
+                alert('❌ Этот тикет уже закрыт. Новые ответы не принимаются.');
+                return;
+            }
+
+            // Разрешаем открыть форму ответа
+            document.getElementById('responseTicketSubject').textContent = ticketSubject;
+            document.getElementById('responseTicketId').value = ticketId;
+            document.getElementById('responseForm').action = `/support/ticket/${ticketId}/`;
+            document.getElementById('responseModal').style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+        });
+}
+
+function closeResponseModal() {
+    document.getElementById('responseModal').style.display = 'none';
+}
+
+// Обработка отправки формы ответа
+document.getElementById('responseForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+
+    // Показываем индикатор загрузки
+    submitBtn.innerHTML = '⏳ Отправка...';
+    submitBtn.disabled = true;
+
+    const formData = new FormData(this);
+
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            alert('✅ Ответ успешно отправлен!');
+            closeResponseModal();
+            closeTicketModal();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            throw new Error('Ошибка отправки');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        alert('❌ Ошибка при отправке ответа');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+});
+
+// Закрытие модального окна ответа при клике вне его
+window.onclick = function(event) {
+    const responseModal = document.getElementById('responseModal');
+    if (event.target === responseModal) {
+        closeResponseModal();
+    }
+}
+
+// Обработка клавиши ESC для модального окна ответа
+// Принудительно скрываем все неактивные вкладки при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    // Скрываем все вкладки
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = 'none';
+    });
+
+    // Показываем только активную
+    const activeTab = document.querySelector('.tab.active');
+    if (activeTab) {
+        const activeContent = document.getElementById(activeTab.dataset.tab);
+        if (activeContent) {
+            activeContent.style.display = 'block';
+        }
+    }
+
+    // Обработка переключения вкладок
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Скрываем все вкладки
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+
+            // Показываем выбранную
+            const content = document.getElementById(tab.dataset.tab);
+            if (content) {
+                content.style.display = 'block';
+            }
+        });
+    });
+});
+</script>
 </body>
 </html>

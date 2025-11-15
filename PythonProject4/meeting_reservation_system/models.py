@@ -6,6 +6,26 @@ from datetime import timedelta
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
+class FAQ(models.Model):
+    CATEGORY_CHOICES = [
+        ('general', '📋 Общие вопросы'),
+        ('booking', '📅 Бронирование'),
+        ('payment', '💳 Оплата'),
+        ('technical', '🛠️ Технические вопросы'),
+    ]
+
+    question = models.CharField(max_length=200, verbose_name="Вопрос")
+    answer = models.TextField(verbose_name="Ответ")
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='general')
+    order = models.IntegerField(default=0, verbose_name="Порядок отображения")
+    is_active = models.BooleanField(default=True, verbose_name="Активно")
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return self.question
+
 class User(AbstractUser):
     ROLE_CHOICES = [
         ('admin', 'Администратор'),
@@ -63,6 +83,8 @@ class SupportTicket(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    last_activity = models.DateTimeField(auto_now=True)  # Дата последней активности
+    auto_close_date = models.DateTimeField(null=True, blank=True)  # Дата авто-закрытия
 
     def __str__(self):
         return f"{self.user.username} - {self.subject}"

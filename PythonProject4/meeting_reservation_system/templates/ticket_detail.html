@@ -2,23 +2,19 @@
     <h3>{{ ticket.subject }}</h3>
 
     <div class="ticket-info">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-            <div>
-                <strong>👤 Автор:</strong> {{ ticket.user.username }}<br>
-                <strong>📅 Создан:</strong> {{ ticket.created_at|date:"d.m.Y H:i" }}<br>
-                <strong>🔄 Статус:</strong>
-                <span class="ticket-status status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
-            </div>
-            {% if user.role in 'admin manager' %}
-            <div>
-                <select id="statusSelect" onchange="updateStatus({{ ticket.id }})" style="padding: 8px; border-radius: 6px; background: #3a3a3a; color: white; border: 1px solid #555;">
-                    {% for status_value, status_name in ticket.STATUS_CHOICES %}
-                    <option value="{{ status_value }}" {% if ticket.status == status_value %}selected{% endif %}>
-                        {{ status_name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
+<div style="margin-bottom: 20px;">
+    <div>
+        <strong>👤 Автор:</strong> {{ ticket.user.username }}<br>
+        <strong>📅 Создан:</strong> {{ ticket.created_at|date:"d.m.Y H:i" }}<br>
+        <strong>🔄 Статус:</strong>
+        <span class="ticket-status status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+    </div>
+</div>
+        <div style="color: #999; font-size: 12px; margin-top: 5px;">
+            {% if ticket.status == 'in_progress' %}
+            ⏰ Будет автоматически закрыт через 3 дня без ответа пользователя
+            {% elif ticket.status == 'closed' %}
+            🟢 Тикет закрыт
             {% endif %}
         </div>
 
@@ -34,9 +30,13 @@
     <div class="response-section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h4 style="margin: 0; color: #fff;">💬 Ответы ({{ ticket.responses.count }})</h4>
-            <button class="btn-reply" onclick="openResponseModal()">
-                ✨ Ответить
-            </button>
+            {% if ticket.status != 'closed' %}
+                {% if user.role in 'admin manager' or user == ticket.user %}
+                <button class="btn-reply" onclick="window.parent.showResponseForm({{ ticket.id }}, '{{ ticket.subject|escapejs }}')">
+                    ✨ Ответить
+                </button>
+                {% endif %}
+            {% endif %}
         </div>
 
         <div class="responses-list">
@@ -63,70 +63,58 @@
             <div class="no-responses" style="text-align: center; padding: 40px; color: #999;">
                 <div style="font-size: 48px; margin-bottom: 10px;">💬</div>
                 <p>Пока нет ответов на это обращение</p>
-                <button class="btn-reply" onclick="openResponseModal()">
-                    💌 Написать первый ответ
-                </button>
+                {% if ticket.status != 'closed' %}
+                    {% if user.role in 'admin manager' or user == ticket.user %}
+                    <button class="btn-reply" onclick="window.parent.showResponseForm({{ ticket.id }}, '{{ ticket.subject|escapejs }}')">
+                        💌 Написать первый ответ
+                    </button>
+                    {% endif %}
+                {% endif %}
             </div>
             {% endfor %}
         </div>
     </div>
+    <!-- КНОПКА ЗАКРЫТИЯ ДЛЯ ПОЛЬЗОВАТЕЛЯ -->
+    {% if user == ticket.user and ticket.status != 'closed' %}
+    <div style="margin-top: 30px; padding: 20px; background: #2d2d2d; border-radius: 10px; border: 1px solid #404040; text-align: center;">
+        <h4 style="color: #fff; margin-bottom: 15px;">✅ Проблема решена?</h4>
+        <p style="color: #ccc; margin-bottom: 20px;">Если ваш вопрос решен, вы можете закрыть обращение</p>
+        <form method="POST" action="{% url 'close_ticket' ticket.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn-close-ticket"
+                    style="background: linear-gradient(135deg, #28a745, #218838);
+                           color: white; padding: 12px 30px; border: none;
+                           border-radius: 8px; cursor: pointer; font-size: 14px;
+                           font-weight: bold; transition: all 0.3s ease;">
+                ✅ Проблема решена - закрыть обращение
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- СООБЩЕНИЕ О ЗАКРЫТОМ ТИКЕТЕ -->
+    {% if ticket.status == 'closed' %}
+    <div style="margin-top: 30px; padding: 20px; background: #2d2d2d; border-radius: 10px; border: 2px solid #28a745; text-align: center;">
+        <div style="font-size: 48px; margin-bottom: 10px;">🔒</div>
+        <h4 style="color: #28a745; margin-bottom: 10px;">Тикет закрыт</h4>
+        <p style="color: #ccc;">Это обращение закрыто. Новые ответы не принимаются.</p>
+        {% if user == ticket.user %}
+        <p style="color: #999; font-size: 14px; margin-top: 10px;">
+            Вы закрыли это обращение
+        </p>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 
 <!-- МОДАЛЬНОЕ ОКНО ДЛЯ ОТВЕТА -->
-<div id="responseModal" class="modal">
-    <div class="modal-content" style="max-width: 700px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h3 style="margin: 0; color: #fff;">💬 Ответ на обращение</h3>
-            <span class="close" onclick="closeResponseModal()" style="font-size: 28px; cursor: pointer; color: #ccc; padding: 5px;">&times;</span>
-        </div>
 
-        <div style="background: #3a3a3a; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
-            <strong style="color: #fff;">Обращение:</strong>
-            <div style="color: #ccc; margin-top: 10px;">{{ ticket.subject }}</div>
-        </div>
-
-        <form method="POST" action="{% url 'ticket_detail' ticket.id %}" id="responseForm">
-            {% csrf_token %}
-            <div class="form-group">
-                <label style="display: block; margin-bottom: 10px; color: #ccc; font-weight: bold;">Ваш ответ</label>
-                <textarea name="response" required
-                          placeholder="Напишите подробный ответ пользователю..."
-                          style="width: 100%; min-height: 200px; padding: 15px; background: #3a3a3a; border: 1px solid #555; border-radius: 10px; color: #fff; font-size: 14px; line-height: 1.5; resize: vertical;"></textarea>
-            </div>
-            <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px;">
-                <button type="button" class="btn-cancel" onclick="closeResponseModal()">
-                    ❌ Отмена
-                </button>
-                <button type="submit" class="btn-send">
-                    📤 Отправить ответ
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
 
 <style>
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.8);
-    animation: fadeIn 0.3s ease-in;
-}
 
-.modal-content {
-    background: #2d2d2d;
-    margin: 5% auto;
-    padding: 30px;
-    border-radius: 15px;
-    border: 1px solid #404040;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    position: relative;
-    animation: slideIn 0.3s ease-out;
+.btn-close-ticket:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(40,167,69,0.3);
 }
 
 @keyframes fadeIn {
@@ -157,38 +145,7 @@
     box-shadow: 0 6px 20px rgba(0,123,255,0.4);
 }
 
-.btn-send {
-    background: linear-gradient(135deg, #28a745, #218838);
-    color: white;
-    padding: 12px 30px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    transition: all 0.3s ease;
-}
 
-.btn-send:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(40,167,69,0.3);
-}
-
-.btn-cancel {
-    background: #6c757d;
-    color: white;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.3s ease;
-}
-
-.btn-cancel:hover {
-    background: #5a6268;
-    transform: translateY(-2px);
-}
 
 .response-item {
     margin-bottom: 20px;
@@ -202,82 +159,71 @@
 </style>
 
 <script>
-function updateStatus(ticketId) {
-    const status = document.getElementById('statusSelect').value;
+// ★★★ ДОБАВЬ ЭТУ ФУНКЦИЮ ДЛЯ ОБНОВЛЕНИЯ СТАТУСА ★★★
 
-    fetch(`/support/ticket/${ticketId}/update-status/`, {
-        method: 'POST',
-        body: JSON.stringify({'status': status}),
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Показываем уведомление об успешном изменении
-            showNotification('✅ Статус обновлен!', 'success');
-            setTimeout(() => location.reload(), 1000);
-        }
-    });
-}
 
-function openResponseModal() {
-    document.getElementById('responseModal').style.display = 'block';
-    document.body.style.overflow = 'hidden'; // Блокируем прокрутку фона
-}
 
-function closeResponseModal() {
-    document.getElementById('responseModal').style.display = 'none';
-    document.body.style.overflow = 'auto'; // Восстанавливаем прокрутку
-}
 
-// Закрытие модального окна при клике вне его
-window.onclick = function(event) {
-    const modal = document.getElementById('responseModal');
-    if (event.target === modal) {
-        closeResponseModal();
+
+
+// ★★★ ДОБАВЬ ОБРАБОТЧИК СОБЫТИЙ ДЛЯ ФОРМЫ ★★★
+document.addEventListener('DOMContentLoaded', function() {
+    const responseForm = document.getElementById('responseForm');
+    if (responseForm) {
+        responseForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+
+            // Показываем индикатор загрузки
+            submitBtn.innerHTML = '⏳ Отправка...';
+            submitBtn.disabled = true;
+
+            const formData = new FormData(this);
+
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    showNotification('✅ Ответ успешно отправлен!', 'success');
+                    closeResponseModal();
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    throw new Error('Ошибка отправки');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                showNotification('❌ Ошибка при отправке ответа', 'error');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
     }
-}
 
-// Обработка отправки формы
-document.getElementById('responseForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-
-    // Показываем индикатор загрузки
-    submitBtn.innerHTML = '⏳ Отправка...';
-    submitBtn.disabled = true;
-
-    const formData = new FormData(this);
-
-    fetch(this.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-        }
-    })
-    .then(response => {
-        if (response.ok) {
-            showNotification('✅ Ответ успешно отправлен!', 'success');
+    // ★★★ ДОБАВЬ ОБРАБОТЧИК ДЛЯ ЗАКРЫТИЯ МОДАЛЬНОГО ОКНА ★★★
+    window.onclick = function(event) {
+        const modal = document.getElementById('responseModal');
+        if (event.target === modal) {
             closeResponseModal();
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            throw new Error('Ошибка отправки');
         }
-    })
-    .catch(error => {
-        console.error('Ошибка:', error);
-        showNotification('❌ Ошибка при отправке ответа', 'error');
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
+    }
+
+    // ★★★ ДОБАВЬ ОБРАБОТЧИК ДЛЯ КЛАВИШИ ESC ★★★
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeResponseModal();
+        }
     });
 });
 
+// ★★★ ФУНКЦИЯ ДЛЯ УВЕДОМЛЕНИЙ ★★★
 function showNotification(message, type) {
     const notification = document.createElement('div');
     notification.style.cssText = `
