@@ -858,10 +858,13 @@
                 </div>
                 {% endif %}
 
-<div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-    <a href="{% url 'room_detail' room.id %}" class="btn">🔍 Подробнее</a>
-    <button class="btn" onclick="openBookingModal({{ room.id }})"
-            style="background: #28a745;">📅 Забронировать</button>
+<div style="text-align: center; margin-top: 20px; ">
+    <a href="{% url 'room_detail' room.id %}" class="btn"
+       style="background: linear-gradient(135deg, #007bff, #0056b3);
+              padding: 12px 30px; font-size: 14px; width: 85%;
+              text-decoration: none; display: block;">
+        🔍 Подробнее о комнате
+    </a>
 </div>
             </div>
             {% endfor %}
