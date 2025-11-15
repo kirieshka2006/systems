@@ -191,6 +191,7 @@ class Booking(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     participants_count = models.IntegerField(default=1)  # ★★★ кол-во участников
     description = models.TextField(blank=True)  # ★★★ описание встречи
+    manager_comment = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.room.name} - {self.start_time.strftime('%d.%m.%Y %H:%M')}"

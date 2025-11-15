@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Менеджер-панель</title>
+    <title>Панель менеджера</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -10,148 +10,319 @@
             background: #1a1a1a;
             color: #e0e0e0;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        .back-button {
+            background: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #404040;
+            border-radius: 8px;
+            padding: 10px 15px;
+            cursor: pointer;
+            margin-bottom: 20px;
         }
-        .header-actions {
+        .booking-card {
+            background: #2d2d2d;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            border: 1px solid #404040;
+        }
+        .booking-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-        }
-        .back-btn {
-            background: #6c757d;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .back-btn:hover {
-            background: #5a6268;
-        }
-        .bookings-table {
-            background: #2d2d2d;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #404040;
-        }
-        th {
-            background: #3a3a3a;
+            margin-bottom: 15px;
         }
         .status-pending { color: #ffc107; }
         .status-confirmed { color: #28a745; }
         .status-cancelled { color: #dc3545; }
-        .btn-approve {
-            background: #28a745;
-            color: white;
-            padding: 6px 12px;
+        .btn {
+            padding: 8px 15px;
             border: none;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
-            margin-right: 5px;
+            margin-right: 10px;
         }
-        .btn-reject {
-            background: #dc3545;
-            color: white;
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+        .btn-confirm { background: #28a745; color: white; }
+        .btn-cancel { background: #dc3545; color: white; }
+        .filters {
+            margin: 20px 0;
+            display: flex;
+            gap: 15px;
         }
-        .no-bookings {
-            text-align: center;
-            color: #999;
-            padding: 40px;
+        .filter-select {
+            padding: 8px;
+            background: #2d2d2d;
+            color: #e0e0e0;
+            border: 1px solid #404040;
+            border-radius: 5px;
+        }
+        .btn-delete {
+            background: #6c757d !important;
+            color: white !important;
+        }
+
+        .btn-delete:hover {
+            background: #5a6268 !important;
+        }
+        .room-category {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            border: 1px solid;
+        }
+
+        .category-economy {
+            background: rgba(40, 167, 69, 0.1);
+            border-color: #28a745;
+            color: #28a745;
+        }
+
+        .category-standard {
+            background: rgba(0, 123, 255, 0.1);
+            border-color: #007bff;
+            color: #007bff;
+        }
+
+        .category-comfort {
+            background: rgba(255, 193, 7, 0.1);
+            border-color: #ffc107;
+            color: #ffc107;
+        }
+
+        .category-vip {
+            background: rgba(108, 92, 231, 0.1);
+            border-color: #6c5ce7;
+            color: #6c5ce7;
+        }
+
+        .category-luxury {
+            background: rgba(220, 53, 69, 0.1);
+            border-color: #dc3545;
+            color: #dc3545;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header-actions">
-            <a href="{% url 'home' %}" class="back-btn">
-                ← Назад на главную
-            </a>
-            <h1>📋 Менеджер-панель</h1>
-            <div style="width: 140px;"></div>
+
+<button class="back-button" onclick="window.history.back()">← Назад</button>
+
+<h1>📋 Панель менеджера - Бронирования</h1>
+
+<!-- Фильтры -->
+<div class="filters">
+    <select class="filter-select" onchange="filterBookings()">
+        <option value="all">Все статусы</option>
+        <option value="pending">⏳ Ожидание</option>
+        <option value="confirmed">✅ Подтверждено</option>
+        <option value="cancelled">❌ Отменено</option>
+    </select>
+
+    <select class="filter-select" onchange="filterByRoom()">
+        <option value="all">Все комнаты</option>
+        {% for room in rooms %}
+        <option value="{{ room.id }}">{{ room.name }}</option>
+        {% endfor %}
+    </select>
+
+    <!-- ★★★ ДОБАВИМ ФИЛЬТР ПО КАТЕГОРИЯМ ★★★ -->
+    <select class="filter-select" onchange="filterByCategory()">
+        <option value="all">Все категории</option>
+        <option value="economy">🟢 Эконом</option>
+        <option value="standard">🔵 Стандарт</option>
+        <option value="comfort">🟡 Комфорт</option>
+        <option value="vip">🟣 VIP</option>
+        <option value="luxury">🔴 Люкс</option>
+    </select>
+</div>
+
+<!-- Список бронирований -->
+<div id="bookings-list">
+    {% for booking in bookings %}
+    <div class="booking-card" data-status="{{ booking.status }}" data-room="{{ booking.room.id }}" data-category="{{ booking.room.category }}">
+        <div class="booking-header">
+            <h3>
+                {% if booking.room.category == 'economy' %}🟢
+                {% elif booking.room.category == 'standard' %}🔵
+                {% elif booking.room.category == 'comfort' %}🟡
+                {% elif booking.room.category == 'vip' %}🟣
+                {% elif booking.room.category == 'luxury' %}🔴
+                {% endif %}
+                {{ booking.room.name }}
+                | 👤 {{ booking.user.username }}
+            </h3>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span class="room-category
+                    {% if booking.room.category == 'economy' %}category-economy
+                    {% elif booking.room.category == 'standard' %}category-standard
+                    {% elif booking.room.category == 'comfort' %}category-comfort
+                    {% elif booking.room.category == 'vip' %}category-vip
+                    {% elif booking.room.category == 'luxury' %}category-luxury{% endif %}">
+                    {% if booking.room.category == 'economy' %}🟢 Эконом
+                    {% elif booking.room.category == 'standard' %}🔵 Стандарт
+                    {% elif booking.room.category == 'comfort' %}🟡 Комфорт
+                    {% elif booking.room.category == 'vip' %}🟣 VIP
+                    {% elif booking.room.category == 'luxury' %}🔴 Люкс{% endif %}
+                </span>
+                <span class="status-{{ booking.status }}">
+                    {{ booking.get_status_display }}
+                </span>
+            </div>
         </div>
 
-        <div class="bookings-table">
-            <h3>⏳ Бронирования ожидающие подтверждения</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Пользователь</th>
-                        <th>Комната</th>
-                        <th>Дата/время</th>
-                        <th>Статус</th>
-                        <th>Действия</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- ★★★ ЗАГЛУШКА - БУДУЩИЕ БРОНИРОВАНИЯ ★★★ -->
-                    <tr>
-                        <td>user123</td>
-                        <td>Переговорка №1</td>
-                        <td>01.12.2024 14:00-16:00</td>
-                        <td class="status-pending">⏳ Ожидание</td>
-                        <td>
-                            <button class="btn-approve">✅ Одобрить</button>
-                            <button class="btn-reject">❌ Отклонить</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>user456</td>
-                        <td>Переговорка №3</td>
-                        <td>02.12.2024 10:00-11:00</td>
-                        <td class="status-pending">⏳ Ожидание</td>
-                        <td>
-                            <button class="btn-approve">✅ Одобрить</button>
-                            <button class="btn-reject">❌ Отклонить</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="booking-details">
+            <p><strong>📅 Дата и время:</strong>
+                {{ booking.date_display }}
+                с {{ booking.time_display }}
+            </p>
+                        <p style="color: red; font-size: 12px;">
+                🔍 Отладка: {{ booking.start_time }} (UTC) → {{ booking.local_start_time }} (локальное)
+            </p>
+            <p><strong>⏱️ Продолжительность:</strong> {{ booking.duration_hours }} часа</p>
+            <p>
+                <strong>💰 Стоимость:</strong>
+                <input type="number" id="price-{{ booking.id }}" value="{{ booking.total_price }}"
+                       style="width: 120px; padding: 4px; background: #2d2d2d; color: #e0e0e0; border: 1px solid #404040;">
+                руб
+            </p>
+            {% if booking.description %}
+            <p><strong>💬 Комментарий:</strong> {{ booking.description }}</p>
+            <p>
+                <strong>💬 Комментарий менеджера:</strong><br>
+                <textarea id="manager-comment-{{ booking.id }}"
+                          style="width: 100%; height: 60px; padding: 6px; background: #2d2d2d; color: #e0e0e0; border: 1px solid #404040;">{{ booking.manager_comment }}</textarea>
+            </p>
+            {% endif %}
+
+            <p><strong>📞 Контакты:</strong> {{ booking.user.phone|default:"Не указан" }} | {{ booking.user.email }}</p>
         </div>
 
-        <div class="bookings-table">
-            <h3>✅ Подтвержденные бронирования</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Пользователь</th>
-                        <th>Комната</th>
-                        <th>Дата/время</th>
-                        <th>Статус</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>admin</td>
-                        <td>Переговорка №2</td>
-                        <td>01.12.2024 09:00-10:00</td>
-                        <td class="status-confirmed">✅ Подтверждено</td>
-                    </tr>
-                </tbody>
-            </table>
+        {% if booking.status == 'pending' %}
+        <div class="booking-actions">
+            <button class="btn btn-confirm" onclick="updateBookingStatus({{ booking.id }}, 'confirmed')">
+                ✅ Подтвердить
+            </button>
+            <button class="btn btn-cancel" onclick="updateBookingStatus({{ booking.id }}, 'cancelled')">
+                ❌ Отклонить
+            </button>
         </div>
+        {% else %}
+        <div class="booking-actions">
+            <button class="btn btn-delete" onclick="deleteBooking({{ booking.id }})"
+                    style="background: #6c757d; color: white;">
+                🗑️ Удалить
+            </button>
 
-
+            {% if booking.status == 'confirmed' %}
+            <button class="btn btn-cancel" onclick="updateBookingStatus({{ booking.id }}, 'cancelled')">
+                ❌ Отменить
+            </button>
+            {% endif %}
+        </div>
+        {% endif %}
     </div>
+    {% empty %}
+    <div class="booking-card">
+        <p>📭 Нет бронирований</p>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    function filterByCategory() {
+    const category = event.target.value;
+    const bookings = document.querySelectorAll('.booking-card');
+
+    bookings.forEach(booking => {
+        if (category === 'all' || booking.dataset.category === category) {
+            booking.style.display = 'block';
+        } else {
+            booking.style.display = 'none';
+        }
+    });
+}
+    function deleteBooking(bookingId) {
+    if (!confirm('❓ Вы уверены что хотите удалить это бронирование?')) {
+        return;
+    }
+
+    fetch(`/api/delete-booking/${bookingId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Показываем сообщение и перезагружаем страницу
+            alert('✅ Бронирование удалено!');
+            location.reload();
+        } else {
+            alert('❌ Ошибка: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        alert('❌ Ошибка при удалении');
+    });
+}
+
+function updateBookingStatus(bookingId, newStatus) {
+
+    let newPrice = document.getElementById(`price-${bookingId}`)?.value || null;
+    let managerComment = document.getElementById(`manager-comment-${bookingId}`)?.value || "";
+
+    fetch(`/api/update-booking-status/${bookingId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+            status: newStatus,
+            total_price: newPrice,
+            manager_comment: managerComment
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert("Готово!");
+            location.reload();
+        } else {
+            alert('Ошибка: ' + data.error);
+        }
+    });
+}
+
+function filterBookings() {
+    const status = event.target.value;
+    const bookings = document.querySelectorAll('.booking-card');
+
+    bookings.forEach(booking => {
+        if (status === 'all' || booking.dataset.status === status) {
+            booking.style.display = 'block';
+        } else {
+            booking.style.display = 'none';
+        }
+    });
+}
+
+function filterByRoom() {
+    const roomId = event.target.value;
+    const bookings = document.querySelectorAll('.booking-card');
+
+    bookings.forEach(booking => {
+        if (roomId === 'all' || booking.dataset.room === roomId) {
+            booking.style.display = 'block';
+        } else {
+            booking.style.display = 'none';
+        }
+    });
+}
+</script>
+
 </body>
 </html>

@@ -3,6 +3,7 @@
 <head>
     <title>Бронирование {{ room.name }}</title>
     <style>
+        /* (оставил твой CSS без изменений) */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -44,13 +45,11 @@
             gap: 30px;
             margin-top: 15px;
         }
-
         .equipment-column {
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
-
         .equipment-item {
             display: flex;
             align-items: center;
@@ -60,7 +59,6 @@
             border-radius: 6px;
             border-left: 3px solid #007bff;
         }
-
         .equipment-icon {
             color: #28a745;
             font-weight: bold;
@@ -96,7 +94,6 @@
             cursor: pointer;
             border: 1px solid #404040;
             transition: all 0.3s;
-
         }
         .tab.active {
             background: #007bff;
@@ -159,21 +156,25 @@
         .calendar-day.selected {
             background: #007bff;
         }
+        .calendar-day.disabled {
+            color: #666;
+            cursor: not-allowed;
+        }
         .calendar-day.other-month {
             color: #666;
         }
 
         /* Время */
-        .time-section {
+        .time-section, .duration-section {
             margin: 25px 0;
         }
-        .time-grid {
+        .time-grid, .duration-buttons {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 10px;
             margin-top: 15px;
         }
-        .time-slot {
+        .time-slot, .duration-btn {
             padding: 12px;
             text-align: center;
             background: #3a3a3a;
@@ -182,17 +183,43 @@
             border: 1px solid #555;
             transition: all 0.3s;
         }
-        .time-slot:hover {
+        .time-slot:hover, .duration-btn:hover {
             background: #4a4a4a;
         }
-        .time-slot.selected {
+        .time-slot.selected, .duration-btn.selected {
             background: #28a745;
             border-color: #28a745;
         }
-        .time-slot.booked {
+        .time-slot.disabled {
             background: #dc3545;
             cursor: not-allowed;
             opacity: 0.6;
+        }
+
+        /* Сводка бронирования */
+        .booking-summary {
+            background: #3a3a3a;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #007bff;
+        }
+        .booking-summary h4 {
+            margin: 0 0 15px 0;
+            color: #fff;
+        }
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+        }
+        .total-price {
+            font-size: 18px;
+            font-weight: bold;
+            color: #28a745;
+            border-top: 1px solid #555;
+            padding-top: 10px;
+            margin-top: 10px;
         }
 
         /* Форма */
@@ -235,253 +262,486 @@
             width: 100%;
             transition: background 0.3s;
         }
-        .btn-submit:hover {
+        .btn-submit:hover:not(:disabled) {
             background: #218838;
+        }
+        .btn-submit:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
 <!-- Кнопка назад -->
-    <button class="back-button" onclick="window.history.back()">← Назад</button>
+<button class="back-button" onclick="window.history.back()">← Назад</button>
 
-    <div class="booking-container">
-        <!-- ЛЕВАЯ КОЛОНКА -->
-        <div class="left-column">
-            <img src="{{ room.image.url }}" alt="{{ room.name }}" class="room-image">
+<div class="booking-container">
+    <!-- ЛЕВАЯ КОЛОНКА -->
+    <div class="left-column">
+        <img src="{{ room.image.url }}" alt="{{ room.name }}" class="room-image">
 
-            <div class="tabs">
-                <div class="tab active" data-tab="services">Услуги</div>
-                <div class="tab" data-tab="price">Цена</div>
-                <div class="tab" data-tab="location">Как добраться</div>
-                <div class="tab" data-tab="reviews">Отзывы</div>
-                <div class="tab" data-tab="features">Характеристики</div>
-            </div>
-
-            <div id="services" class="tab-content active">
-                <h3>Услуги и оборудование</h3>
-                {% if room.equipment %}
-                    <div class="equipment-columns">
-                        <div class="equipment-column">
-                            {% for item in room.get_equipment_columns.0 %}
-                            <div class="equipment-item">
-                                <span class="equipment-icon">✓</span>
-                                {{ item }}
-                            </div>
-                            {% endfor %}
-                        </div>
-                        <div class="equipment-column">
-                            {% for item in room.get_equipment_columns.1 %}
-                            <div class="equipment-item">
-                                <span class="equipment-icon">✓</span>
-                                {{ item }}
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                {% else %}
-                    <p>Описание услуг появится скоро...</p>
-                {% endif %}
-            </div>
-
-            <div id="price" class="tab-content">
-                <h3>Стоимость</h3>
-                <p><strong>{{ room.price_per_hour }} руб/час</strong></p>
-                <p>Минимальное время бронирования: 1 час</p>
-            </div>
-
-            <div id="location" class="tab-content">
-                <h3>Как добраться</h3>
-                <p>{{ room.location }}</p>
-                <p>🚇 Ближайшее метро: уточняется</p>
-            </div>
-
-            <div id="reviews" class="tab-content">
-                <h3>Отзывы</h3>
-                <p>Здесь будут отзывы о переговорной комнате</p>
-            </div>
-
-            <div id="features" class="tab-content">
-                <h3>Характеристики</h3>
-                <p>👥 Вместимость: до {{ room.capacity }} человек</p>
-                <p>🎯 Категория:
-                    {% if room.category == 'economy' %}🟢 Эконом
-                    {% elif room.category == 'standard' %}🔵 Стандарт
-                    {% elif room.category == 'comfort' %}🟡 Комфорт
-                    {% elif room.category == 'vip' %}🟣 VIP
-                    {% elif room.category == 'luxury' %}🔴 Люкс
-                    {% endif %}
-                </p>
-            </div>
+        <div class="tabs">
+            <div class="tab active" data-tab="services">Услуги</div>
+            <div class="tab" data-tab="price">Цена</div>
+            <div class="tab" data-tab="location">Как добраться</div>
+            <div class="tab" data-tab="reviews">Отзывы</div>
+            <div class="tab" data-tab="features">Характеристики</div>
         </div>
 
-        <!-- ПРАВАЯ КОЛОНКА - ФОРМА БРОНИРОВАНИЯ -->
-        <div class="right-column">
-            <h2 style="margin-top: 0; color: #fff;">Бронирование {{ room.name }}</h2>
-
-            <form class="booking-form" method="POST">
-                {% csrf_token %}
-
-                <!-- Календарь -->
-                <div class="calendar">
-                    <div class="calendar-header">
-                        <button type="button" class="calendar-nav" onclick="changeMonth(-1)">←</button>
-                        <h3 id="currentMonth" style="margin: 0;">Ноябрь 2024</h3>
-                        <button type="button" class="calendar-nav" onclick="changeMonth(1)">→</button>
+        <div id="services" class="tab-content active">
+            <h3>Услуги и оборудование</h3>
+            {% if room.equipment %}
+                <div class="equipment-columns">
+                    <div class="equipment-column">
+                        {% for item in room.get_equipment_columns.0 %}
+                        <div class="equipment-item">
+                            <span class="equipment-icon">✓</span>
+                            {{ item }}
+                        </div>
+                        {% endfor %}
                     </div>
-                    <div class="calendar-grid" id="calendarGrid">
-                        <!-- Календарь генерируется через JavaScript -->
-                    </div>
-                </div>
-
-                <!-- Выбор времени -->
-                <div class="time-section">
-                    <h3>Выберите время</h3>
-                    <div class="time-grid" id="timeGrid">
-                        <!-- Время генерируется через JavaScript -->
+                    <div class="equipment-column">
+                        {% for item in room.get_equipment_columns.1 %}
+                        <div class="equipment-item">
+                            <span class="equipment-icon">✓</span>
+                            {{ item }}
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
+            {% else %}
+                <p>Описание услуг появится скоро...</p>
+            {% endif %}
+        </div>
 
-                <!-- Контактные данные -->
-                <div class="contact-form">
-                    <h3>Контактные данные</h3>
+        <div id="price" class="tab-content">
+            <h3>Стоимость</h3>
+            <p><strong>{{ room.price_per_hour }} руб/час</strong></p>
+            <p>Минимальное время бронирования: 1 час</p>
+            <p>Максимальное время бронирования: 4 часа</p>
+        </div>
 
-                    <div class="form-group">
-                        <label>ФИО</label>
-                        <input type="text" name="full_name" required placeholder="Иванов Иван Иванович">
-                    </div>
+        <div id="location" class="tab-content">
+            <h3>Как добраться</h3>
+            <p>{{ room.location }}</p>
+            <p>🚇 Ближайшее метро: уточняется</p>
+        </div>
 
-                    <div class="form-group">
-                        <label>Телефон</label>
-                        <input type="tel" name="phone" required placeholder="+7 (999) 999-99-99">
-                    </div>
+        <div id="reviews" class="tab-content">
+            <h3>Отзывы</h3>
+            <p>Здесь будут отзывы о переговорной комнате</p>
+        </div>
 
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" name="email" required placeholder="example@mail.ru">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Комментарий к заявке</label>
-                        <textarea name="comment" placeholder="Дополнительная информация о встрече..."></textarea>
-                    </div>
-
-                    <button type="submit" class="btn-submit">ОТПРАВИТЬ ЗАПРОС</button>
-                </div>
-            </form>
+        <div id="features" class="tab-content">
+            <h3>Характеристики</h3>
+            <p>👥 Вместимость: до {{ room.capacity }} человек</p>
+            <p>🎯 Категория:
+                {% if room.category == 'economy' %}🟢 Эконом
+                {% elif room.category == 'standard' %}🔵 Стандарт
+                {% elif room.category == 'comfort' %}🟡 Комфорт
+                {% elif room.category == 'vip' %}🟣 VIP
+                {% elif room.category == 'luxury' %}🔴 Люкс
+                {% endif %}
+            </p>
         </div>
     </div>
 
-    <script>
-        // ТАБЫ
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                // Убираем активный класс у всех табов
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    <!-- ПРАВАЯ КОЛОНКА - ФОРМА БРОНИРОВАНИЯ -->
+    <div class="right-column">
+        <h2 style="margin-top: 0; color: #fff;">Бронирование {{ room.name }}</h2>
 
-                // Добавляем активный класс к выбранному табу
-                tab.classList.add('active');
-                document.getElementById(tab.dataset.tab).classList.add('active');
-            });
+             {% if messages %}
+        <div style="margin-bottom: 20px;">
+            {% for message in messages %}
+            <div style="
+                background: {% if 'error' in message.tags %} #dc3545 {% else %} #28a745 {% endif %};
+                color: white;
+                padding: 15px;
+                border-radius: 10px;
+                margin-bottom: 15px;
+                border: 2px solid {% if 'error' in message.tags %} #c82333 {% else %} #218838 {% endif %};
+                font-weight: bold;
+                text-align: center;
+            ">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form class="booking-form" method="POST" action="{% url 'create_booking' %}">
+            {% csrf_token %}
+
+            <input type="hidden" name="room_id" value="{{ room.id }}">
+
+            <!-- Скрытые поля для данных бронирования -->
+            <input type="hidden" name="selected_date" id="selectedDate">
+            <input type="hidden" name="start_time" id="startTime">
+            <input type="hidden" name="duration" id="duration">
+
+            <!-- Календарь -->
+            <div class="calendar">
+                <div class="calendar-header">
+                    <button type="button" class="calendar-nav" onclick="changeMonth(-1)">←</button>
+                    <h3 id="currentMonth" style="margin: 0;">Ноябрь 2024</h3>
+                    <button type="button" class="calendar-nav" onclick="changeMonth(1)">→</button>
+                </div>
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Календарь генерируется через JavaScript -->
+                </div>
+            </div>
+
+            <!-- Выбор времени начала -->
+            <div class="time-section">
+                <h3>Выберите время начала</h3>
+                <div class="time-grid" id="timeGrid">
+                    <!-- Время генерируется через JavaScript -->
+                </div>
+            </div>
+
+            <!-- Выбор продолжительности -->
+            <div class="duration-section">
+                <h3>Продолжительность</h3>
+                <div class="duration-buttons" id="durationButtons">
+                    <button type="button" class="duration-btn" data-hours="1">1 час</button>
+                    <button type="button" class="duration-btn" data-hours="2">2 часа</button>
+                    <button type="button" class="duration-btn" data-hours="3">3 часа</button>
+                    <button type="button" class="duration-btn" data-hours="4">4 часа</button>
+                </div>
+            </div>
+
+            <!-- Сводка бронирования -->
+            <div class="booking-summary" id="bookingSummary" style="display: none;">
+                <h4>📅 Сводка бронирования</h4>
+                <div class="summary-item">
+                    <span>Дата:</span>
+                    <span id="summaryDate">-</span>
+                </div>
+                <div class="summary-item">
+                    <span>Время:</span>
+                    <span id="summaryTime">-</span>
+                </div>
+                <div class="summary-item">
+                    <span>Продолжительность:</span>
+                    <span id="summaryDuration">-</span>
+                </div>
+                <div class="summary-item">
+                    <span>Стоимость:</span>
+                    <span id="summaryPrice">-</span>
+                </div>
+                <div class="summary-item total-price">
+                    <span>ИТОГО:</span>
+                    <span id="totalPrice">0 руб</span>
+                </div>
+            </div>
+
+            <!-- Контактные данные -->
+            <div class="contact-form">
+                <h3>Контактные данные</h3>
+
+                <div class="form-group">
+                    <label>ФИО *</label>
+                    <input type="text" name="full_name" required placeholder="Иванов Иван Иванович" value="{{ user.get_full_name }}">
+                </div>
+
+                <div class="form-group">
+                    <label>Телефон *</label>
+                    <input type="tel" name="phone" required placeholder="+7 (999) 999-99-99" value="{{ user.phone }}">
+                </div>
+
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" name="email" required placeholder="example@mail.ru" value="{{ user.email }}">
+                </div>
+
+                <div class="form-group">
+                    <label>Дополнительные пожелания</label>
+                    <textarea name="comment" placeholder="Дополнительное оборудование, кейтеринг, особые требования..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn" disabled>ОТПРАВИТЬ ЗАПРОС НА БРОНИРОВАНИЕ</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // --- Глобальные переменные
+    let currentDate = new Date();
+    let selectedDate = null;      // Date объект (локальный)
+    let selectedTime = null;      // строка '09:00'
+    let selectedDuration = null;  // число часов
+    const roomPricePerHour = {{ room.price_per_hour }};
+    const roomId = {{ room.id }};
+
+    // --- Табы
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    // --- КАЛЕНДАРЬ
+    function renderCalendar() {
+        const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+        document.getElementById('currentMonth').textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+
+        const calendarGrid = document.getElementById('calendarGrid');
+        calendarGrid.innerHTML = '';
+
+        // Заголовки дней недели
+        const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+        days.forEach(day => {
+            const dayElement = document.createElement('div');
+            dayElement.textContent = day;
+            dayElement.style.fontWeight = 'bold';
+            dayElement.style.color = '#ccc';
+            calendarGrid.appendChild(dayElement);
         });
 
-        // КАЛЕНДАРЬ
-        let currentDate = new Date();
+        // Дни месяца
+        const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
-        function renderCalendar() {
-            const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
-            document.getElementById('currentMonth').textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+        // Пустые ячейки перед первым днем (сдвиг по ISO-неделе: Пн..Вс)
+        for (let i = 0; i < (firstDay.getDay() + 6) % 7; i++) {
+            const emptyDay = document.createElement('div');
+            emptyDay.classList.add('calendar-day', 'other-month');
+            calendarGrid.appendChild(emptyDay);
+        }
 
-            const calendarGrid = document.getElementById('calendarGrid');
-            calendarGrid.innerHTML = '';
+        // Дни текущего месяца
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-            // Заголовки дней недели
-            const days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-            days.forEach(day => {
-                const dayElement = document.createElement('div');
-                dayElement.textContent = day;
-                dayElement.style.fontWeight = 'bold';
-                dayElement.style.color = '#ccc';
-                calendarGrid.appendChild(dayElement);
-            });
+        for (let day = 1; day <= lastDay.getDate(); day++) {
+            const dayElement = document.createElement('div');
+            dayElement.textContent = day;
+            dayElement.classList.add('calendar-day');
 
-            // Дни месяца
-            const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-            const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+            const cellDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+            cellDate.setHours(0, 0, 0, 0);
 
-            // Пустые ячейки перед первым днем
-            for (let i = 0; i < (firstDay.getDay() + 6) % 7; i++) {
-                const emptyDay = document.createElement('div');
-                emptyDay.classList.add('calendar-day', 'other-month');
-                calendarGrid.appendChild(emptyDay);
+            // Отключаем прошедшие даты
+            if (cellDate < today) {
+                dayElement.classList.add('disabled');
+            } else {
+                dayElement.addEventListener('click', () => selectDate(day, cellDate));
+
+                // Подсвечиваем выбранную дату (сравнение локальных дат)
+                if (selectedDate && cellDate.getTime() === selectedDate.getTime()) {
+                    dayElement.classList.add('selected');
+                }
             }
 
-            // Дни текущего месяца
-            for (let day = 1; day <= lastDay.getDate(); day++) {
-                const dayElement = document.createElement('div');
-                dayElement.textContent = day;
-                dayElement.classList.add('calendar-day');
-
-                // Проверяем, не прошедшая ли дата
-                const today = new Date();
-                const cellDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-                if (cellDate < today) {
-                    dayElement.style.opacity = '0.5';
-                    dayElement.style.cursor = 'not-allowed';
-                } else {
-                    dayElement.addEventListener('click', () => selectDate(day));
-                }
-
-                calendarGrid.appendChild(dayElement);
-            }
+            calendarGrid.appendChild(dayElement);
         }
+    }
 
-        function changeMonth(direction) {
-            currentDate.setMonth(currentDate.getMonth() + direction);
-            renderCalendar();
-        }
-
-        function selectDate(day) {
-            document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
-            event.target.classList.add('selected');
-
-            // Здесь можно добавить логику для загрузки доступного времени
-            generateTimeSlots();
-        }
-
-        // ГЕНЕРАЦИЯ ВРЕМЕНИ
-        function generateTimeSlots() {
-            const timeGrid = document.getElementById('timeGrid');
-            timeGrid.innerHTML = '';
-
-            const timeSlots = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
-
-            timeSlots.forEach(time => {
-                const timeSlot = document.createElement('div');
-                timeSlot.textContent = time;
-                timeSlot.classList.add('time-slot');
-
-                // Случайным образом помечаем некоторые слоты как занятые (для демо)
-                if (Math.random() > 0.7) {
-                    timeSlot.classList.add('booked');
-                } else {
-                    timeSlot.addEventListener('click', () => {
-                        document.querySelectorAll('.time-slot').forEach(ts => ts.classList.remove('selected'));
-                        timeSlot.classList.add('selected');
-                    });
-                }
-
-                timeGrid.appendChild(timeSlot);
-            });
-        }
-
-        // Инициализация
+    function changeMonth(direction) {
+        currentDate.setMonth(currentDate.getMonth() + direction);
         renderCalendar();
-        generateTimeSlots();
+        // Сбрасываем выбор времени при смене месяца
+        resetTimeSelection();
+    }
 
-        // Устанавливаем сегодняшнюю дату как минимальную для поля даты
-        const today = new Date().toISOString().split('T')[0];
-        document.querySelector('input[type="date"]').min = today;
-    </script>
+    function selectDate(day, date) {
+        // date — локальный Date с 00:00 часов локального времени
+        selectedDate = date;
+        renderCalendar();
+
+        // ЗАПИСЫВАЕМ в скрытое поле локальную дату в формате YYYY-MM-DD (без конвертаций в UTC)
+        document.getElementById('selectedDate').value = formatDate(selectedDate);
+
+        // Сбрасываем выбор времени и продолжительности
+        selectedTime = null;
+        selectedDuration = null;
+        document.querySelectorAll('.duration-btn').forEach(btn => {
+            btn.classList.remove('selected');
+        });
+        // Очищаем выделение времени
+        document.getElementById('timeGrid').innerHTML = '';
+
+        // Загружаем доступное время для выбранной даты
+        loadAvailableTimes();
+
+        updateBookingSummary();
+    }
+
+    // --- ВРЕМЯ - ЗАПРОС ДОСТУПНОСТИ
+    function loadAvailableTimes() {
+        if (!selectedDate) return;
+
+        const timeGrid = document.getElementById('timeGrid');
+        timeGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 20px;">Загрузка доступного времени...</div>';
+        timeGrid.classList.add('loading');
+
+        // Форматируем дату для запроса — ЛОКАЛЬНАЯ дата без смещений
+        const dateStr = formatDate(selectedDate);
+
+        fetch(`/api/available-times/${roomId}/?date=${dateStr}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            // отладка (при необходимости)
+            // console.log('Данные с сервера:', data);
+            generateTimeSlots(data.available_times || [], data.booked_times || []);
+            timeGrid.classList.remove('loading');
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки времени:', error);
+            timeGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #dc3545;">Ошибка загрузки времени</div>';
+            timeGrid.classList.remove('loading');
+        });
+    }
+
+    function generateTimeSlots(availableTimes, bookedTimes) {
+        const timeGrid = document.getElementById('timeGrid');
+        timeGrid.innerHTML = '';
+
+        const allTimeSlots = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
+
+        allTimeSlots.forEach(time => {
+            const timeSlot = document.createElement('div');
+            timeSlot.textContent = time;
+            timeSlot.classList.add('time-slot');
+            timeSlot.dataset.time = time;
+
+            const isAvailable = availableTimes.includes(time);
+            const isBooked = bookedTimes.includes(time);
+
+            if (isAvailable) {
+                // Передаём ивент-элемент в selectTime, чтобы корректно подсветить
+                timeSlot.addEventListener('click', (e) => selectTime(time, e.currentTarget));
+
+                if (selectedTime === time) {
+                    timeSlot.classList.add('selected');
+                }
+            } else {
+                timeSlot.classList.add('disabled');
+                if (isBooked) {
+                    timeSlot.title = '🚫 Это время уже занято';
+                } else {
+                    timeSlot.title = '❌ Время недоступно';
+                }
+            }
+
+            timeGrid.appendChild(timeSlot);
+        });
+
+        if (availableTimes.length === 0) {
+            timeGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: #dc3545;">🚫 На эту дату нет свободного времени</div>';
+        }
+    }
+
+    function selectTime(time, el) {
+        selectedTime = time;
+
+        // Сброс выделения
+        document.querySelectorAll('.time-slot').forEach(slot => {
+            slot.classList.remove('selected');
+        });
+
+        // Подсветить текущий элемент (если передан)
+        if (el) {
+            el.classList.add('selected');
+        } else {
+            // на всякий случай — попытаемся найти слот по data-time
+            const found = document.querySelector(`.time-slot[data-time="${time}"]`);
+            if (found) found.classList.add('selected');
+        }
+
+        document.getElementById('startTime').value = selectedTime;
+        updateBookingSummary();
+    }
+
+    // --- ПРОДОЛЖИТЕЛЬНОСТЬ
+    document.querySelectorAll('.duration-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectedDuration = parseInt(btn.dataset.hours, 10);
+
+            document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+
+            document.getElementById('duration').value = selectedDuration;
+
+            updateBookingSummary();
+        });
+    });
+
+    // --- ОБНОВЛЕНИЕ СВОДКИ
+    function updateBookingSummary() {
+        const summary = document.getElementById('bookingSummary');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (selectedDate && selectedTime && selectedDuration) {
+            summary.style.display = 'block';
+
+            document.getElementById('summaryDate').textContent = formatDateDisplay(selectedDate);
+            document.getElementById('summaryTime').textContent = `${selectedTime} - ${calculateEndTime()}`;
+            document.getElementById('summaryDuration').textContent = `${selectedDuration} час${selectedDuration > 1 ? 'а' : ''}`;
+
+            const totalPrice = roomPricePerHour * selectedDuration;
+            document.getElementById('summaryPrice').textContent = `${roomPricePerHour} руб/час × ${selectedDuration} = ${totalPrice} руб`;
+            document.getElementById('totalPrice').textContent = `${totalPrice} руб`;
+
+            submitBtn.disabled = false;
+        } else {
+            summary.style.display = 'none';
+            submitBtn.disabled = true;
+        }
+    }
+
+    function calculateEndTime() {
+        if (!selectedTime || !selectedDuration) return '-';
+        const [hours, minutes] = selectedTime.split(':').map(Number);
+        const endHours = hours + selectedDuration;
+        return `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+
+    function resetTimeSelection() {
+        selectedTime = null;
+        selectedDuration = null;
+        document.getElementById('timeGrid').innerHTML = '';
+        document.querySelectorAll('.duration-btn').forEach(btn => btn.classList.remove('selected'));
+        updateBookingSummary();
+    }
+
+    // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ДАТ
+    // Возвращает строку YYYY-MM-DD локальной даты (без конвертации в UTC)
+    function formatDate(date) {
+        const y = date.getFullYear();
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        const d = date.getDate().toString().padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    // Отображаемая дата в сводке: DD.MM.YYYY
+    function formatDateDisplay(date) {
+        const y = date.getFullYear();
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        const d = date.getDate().toString().padStart(2, '0');
+        return `${d}.${m}.${y}`;
+    }
+
+    // --- Инициализация
+    renderCalendar();
+
+    // Устанавливаем сегодняшнюю дату как выбранную по умолчанию
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    // Если хочешь, чтобы по умолчанию не была выбрана дата — закомментируй следующую строку
+    selectDate(today.getDate(), today);
+</script>
 </body>
 </html>

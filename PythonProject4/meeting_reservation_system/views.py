@@ -10,7 +10,8 @@ from .models import Room, User, EmailConfirmation, Booking
 from django.http import JsonResponse
 from datetime import datetime, timedelta
 from .models import SupportTicket, TicketResponse
-
+import json
+from decimal import Decimal
 @login_required
 def ticket_response_form(request, ticket_id):
     """Возвращает HTML форму для ответа на тикет"""
@@ -426,14 +427,87 @@ def admin_panel(request):
 @login_required
 def manager_panel(request):
     """Менеджерская панель для подтверждения бронирований"""
-    # Проверяем что пользователь менеджер или админ
     if request.user.role not in ['manager', 'admin']:
         messages.error(request, '❌ Доступ запрещен!')
         return redirect('home')
 
-    # Пока заглушка - потом добавим реальные бронирования
-    return render(request, 'manager_panel.html')
+    bookings = Booking.objects.all().order_by('-created_at')
+    rooms = Room.objects.all()
 
+    from django.utils.timezone import get_current_timezone
+
+    # ★★★ СОЗДАЕМ СТРОКИ С ДАТАМИ В PYTHON ★★★
+    for booking in bookings:
+        tz = get_current_timezone()
+        local_start = booking.start_time.astimezone(tz)
+        local_end = booking.end_time.astimezone(tz)
+
+        # Сохраняем как строки чтобы избежать конвертации в шаблоне
+        booking.date_display = local_start.strftime("%d.%m.%Y")
+        booking.time_display = f"{local_start.strftime('%H:%M')} - {local_end.strftime('%H:%M')}"
+
+        duration_delta = booking.end_time - booking.start_time
+        booking.duration_hours = duration_delta.seconds // 3600
+        booking.total_price = booking.duration_hours * booking.room.price_per_hour
+
+    return render(request, 'manager_panel.html', {
+        'bookings': bookings,
+        'rooms': rooms
+    })
+
+
+@login_required
+def delete_booking(request, booking_id):
+    """Удаление бронирования (для менеджеров)"""
+    if request.user.role not in ['admin', 'manager']:
+        return JsonResponse({'success': False, 'error': 'Доступ запрещен'})
+
+    try:
+        booking = Booking.objects.get(id=booking_id)
+        booking.delete()
+
+        messages.success(request, '✅ Бронирование успешно удалено!')
+        return JsonResponse({'success': True})
+
+    except Booking.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Бронирование не найдено'})
+
+@login_required
+def update_booking_status(request, booking_id):
+    if request.user.role not in ['admin', 'manager']:
+        return JsonResponse({'success': False, 'error': 'Нет доступа'})
+
+    try:
+        booking = Booking.objects.get(id=booking_id)
+        data = json.loads(request.body)
+
+        new_status = data.get('status')
+        new_price = data.get('total_price')
+        manager_comment = data.get('manager_comment')
+
+        # Менеджер обновил цену
+        if new_price:
+            booking.total_price = Decimal(new_price)
+
+        # Менеджер оставил комментарий
+        if manager_comment is not None:
+            booking.manager_comment = manager_comment
+
+        # Меняем статус
+        if new_status in dict(Booking.STATUS_CHOICES):
+            booking.status = new_status
+
+        booking.save()
+
+        # Если подтверждено — отправляем письмо
+        if new_status == "confirmed":
+            from .email_booking import send_booking_confirmation
+            send_booking_confirmation(booking)
+
+        return JsonResponse({'success': True})
+
+    except Booking.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Бронь не найдена'})
 
 @login_required
 def admin_user_profile(request, user_id):
@@ -596,53 +670,125 @@ def get_available_rooms(request):
 
 @login_required
 def create_booking(request):
-    """Создать бронирование"""
+    """Создать бронирование со страницы комнаты"""
     if request.method == 'POST':
-        room_id = request.POST.get('room_id')
-        date = request.POST.get('date')
-        start_time = request.POST.get('start_time')
-        duration = request.POST.get('duration')
-        participants = request.POST.get('participants')
-        description = request.POST.get('description')
-
         try:
+            room_id = request.POST.get('room_id')
+            date_str = request.POST.get('selected_date')
+            time_str = request.POST.get('start_time')
+            duration = request.POST.get('duration')
+            full_name = request.POST.get('full_name')
+            phone = request.POST.get('phone')
+            email = request.POST.get('email')
+            comment = request.POST.get('comment')
+
+            print(
+                f"🔍 ДЕБАГ: Получены данные - комната:{room_id}, дата:{date_str}, время:{time_str}, длительность:{duration}")
+
+            # Получаем комнату
             room = Room.objects.get(id=room_id)
 
-            # Проверяем доступность комнаты
-            if room.status != 'active':
-                return JsonResponse({'success': False, 'error': 'Эта комната временно недоступна'})
+            # ★★★ ПРАВИЛЬНОЕ СОЗДАНИЕ DATETIME ★★★
+            from django.utils.timezone import make_aware
+            from zoneinfo import ZoneInfo
 
-            # Проверяем вместимость
-            if int(participants) > room.capacity:
-                return JsonResponse(
-                    {'success': False, 'error': f'Превышена вместимость комнаты (макс: {room.capacity} чел.)'})
-
-            # Создаем datetime объекты
-            start_datetime = datetime.strptime(f"{date} {start_time}", "%Y-%m-%d %H:%M")
+            naive_datetime = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
+            start_datetime = make_aware(naive_datetime, timezone=ZoneInfo("Asia/Irkutsk"))
             end_datetime = start_datetime + timedelta(hours=int(duration))
+
+
 
             # Проверяем что бронирование в будущем
             if start_datetime < timezone.now():
-                return JsonResponse({'success': False, 'error': 'Нельзя бронировать в прошлом'})
+                messages.error(request, '❌ Нельзя бронировать в прошлом!')
+                return redirect('room_detail', room_id=room_id)
 
-            # TODO: Добавить проверку пересечения с другими бронированиями
+            # Проверяем доступность комнаты
+            overlapping = Booking.objects.filter(
+                room=room,
+                start_time__lt=end_datetime,
+                end_time__gt=start_datetime,
+                status__in=['pending', 'confirmed']
+            ).exists()
 
+            if overlapping:
+                messages.error(request, '❌ Комната уже занята в это время!')
+                return redirect('room_detail', room_id=room_id)
+
+            # Создаем бронирование
             booking = Booking.objects.create(
                 user=request.user,
                 room=room,
                 start_time=start_datetime,
                 end_time=end_datetime,
-                participants_count=participants,
-                description=description,
+                description=comment,
                 status='pending'
             )
 
-            return JsonResponse({'success': True, 'booking_id': booking.id})
+            print(f"✅ БРОНИРОВАНИЕ СОЗДАНО УСПЕШНО!")
+            print(f"   Сохранено в базе как: {booking.start_time}")
 
-        except Room.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Комната не найдена'})
+            messages.success(request, '✅ Запрос на бронирование отправлен! Ожидайте подтверждения.')
+            return redirect('home')
+
         except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
+            print(f"❌ ОШИБКА ПРИ БРОНИРОВАНИИ: {str(e)}")
+            messages.error(request, f'❌ Ошибка при бронировании: {str(e)}')
+            return redirect('room_detail', room_id=room_id)
+
+    return redirect('home')
+
+
+@login_required
+def get_available_times(request, room_id):
+    """AJAX: Получить доступное время для комнаты на дату"""
+    date_str = request.GET.get('date')
+
+    try:
+        room = Room.objects.get(id=room_id)
+        selected_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+
+        # Все возможные слоты времени
+        time_slots = []
+        for hour in range(9, 20):
+            time_slots.append(f"{hour:02d}:00")
+
+        # Получаем бронирования
+        bookings = Booking.objects.filter(
+            room=room,
+            start_time__date=selected_date,
+            status__in=['pending', 'confirmed']
+        )
+
+        # Конвертируем в локальное время
+        from django.utils.timezone import localtime
+
+        # Создаем список занятого времени
+        booked_slots = []
+        for booking in bookings:
+            local_start = localtime(booking.start_time)
+            local_end = localtime(booking.end_time)
+
+            current_time = local_start
+            while current_time < local_end:
+                time_str = current_time.strftime("%H:%M")
+                booked_slots.append(time_str)
+                current_time += timedelta(hours=1)
+
+        available_slots = [slot for slot in time_slots if slot not in booked_slots]
+
+        return JsonResponse({
+            'available_times': available_slots,
+            'booked_times': booked_slots
+        })
+
+    except Exception as e:
+        print(f"❌ Ошибка в get_available_times: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=400)
+
+    except Exception as e:
+        print(f"❌ ОШИБКА в get_available_times: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=400)
 
 @login_required
 def update_avatar(request):
@@ -917,11 +1063,3 @@ def toggle_room_status(request, room_id):
     except Room.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Комната не найдена'})
 
-@login_required
-def booking_form(request, room_id):
-    """Возвращает HTML форму бронирования для модального окна"""
-    try:
-        room = Room.objects.get(id=room_id)
-        return render(request, 'booking_form.html', {'room': room})
-    except Room.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Комната не найдена'})
