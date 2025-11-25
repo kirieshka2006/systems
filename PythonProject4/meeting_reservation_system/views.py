@@ -1063,3 +1063,26 @@ def toggle_room_status(request, room_id):
     except Room.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Комната не найдена'})
 
+
+@login_required
+def delete_user(request, user_id):
+    """Удаление пользователя (только для админа)"""
+    if request.user.role != 'admin':
+        return JsonResponse({'success': False, 'error': 'Доступ запрещен!'})
+
+    try:
+        user_to_delete = User.objects.get(id=user_id)
+
+        # Нельзя удалить самого себя
+        if user_to_delete.id == request.user.id:
+            return JsonResponse({'success': False, 'error': 'Нельзя удалить свой аккаунт!'})
+
+        # Нельзя удалить других админов
+        if user_to_delete.role == 'admin':
+            return JsonResponse({'success': False, 'error': 'Нельзя удалить администратора!'})
+
+        user_to_delete.delete()
+        return JsonResponse({'success': True})
+
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Пользователь не найден'})

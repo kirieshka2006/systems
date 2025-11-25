@@ -47,6 +47,8 @@ urlpatterns = [
     path('api/update-booking-status/<int:booking_id>/', views.update_booking_status, name='update_booking_status'),
     path('api/available-times/<int:room_id>/', views.get_available_times, name='available_times'),
     path('api/delete-booking/<int:booking_id>/', views.delete_booking, name='delete_booking'),
+
+    path('api/delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

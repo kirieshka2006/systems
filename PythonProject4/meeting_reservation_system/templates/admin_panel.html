@@ -132,10 +132,28 @@
         .role-btn:hover {
             background: #5a6268;
         }
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .delete-btn:hover:not(:disabled) {
+            background: #c82333;
+        }
+        .delete-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        {% csrf_token %}
         <div class="header-actions">
             <a href="{% url 'home' %}" class="back-btn">
                 ← Назад на главную
@@ -171,32 +189,65 @@
                         <tr>
                             <th>Логин</th>
                             <th>Email</th>
+                            <th>Последний вход</th>  <!-- ★★★ НОВАЯ КОЛОНКА ★★★ -->
                             <th>Роль</th>
                             <th>Действия</th>
                         </tr>
                     </thead>
                     <tbody id="usersTbody">
-                        {% for user in users %}
-                        <tr class="user-row"
-                            data-username="{{ user.username|lower }}"
-                            data-role="{{ user.role }}">
-                            <td>{{ user.username }}</td>
-                            <td>{{ user.email|default:"Не указан" }}</td>
-                            <td>
-                                <span class="role-badge role-{{ user.role }}">
-                                    {{ user.get_role_display }}
-                                </span>
-                            </td>
-                            <td>
-                                <a href="{% url 'admin_user_profile' user.id %}" class="view-btn">
-                                    👁️ Просмотр
-                                </a>
-                                <button class="role-btn">
-                                    ✏️ Роль
-                                </button>
-                            </td>
-                        </tr>
-                        {% endfor %}
+                    {% for user in users %}
+                    <tr class="user-row"
+                        data-username="{{ user.username|lower }}"
+                        data-role="{{ user.role }}">
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email|default:"Не указан" }}</td>
+                        <td>
+                            {% if user.last_login %}
+                                {% now "Y-m-d" as today %}
+                                {% with user.last_login|date:"Y-m-d" as last_login_date %}
+                                    {% if today == last_login_date %}
+                                        <span style="color: #28a745;">● Сегодня</span>
+                                    {% else %}
+                                        {% with days_since=user.last_login|timesince %}
+                                            {% if "day" in days_since %}
+                                                {% with days=days_since.split.0 %}
+                                                    {% if days == "1" %}
+                                                        <span style="color: #fd7e14;">● 1 день назад</span>
+                                                    {% else %}
+                                                        <span style="color: #dc3545;">● {{ days }} дней назад</span>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            {% else %}
+                                                <span style="color: #28a745;">● Менее дня</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <span style="color: #6c757d;">● Никогда</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="role-badge role-{{ user.role }}">
+                                {{ user.get_role_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'admin_user_profile' user.id %}" class="view-btn">
+                                👁️ Просмотр
+                            </a>
+                            <button class="role-btn">
+                                ✏️ Роль
+                            </button>
+                            <!-- ★★★ КНОПКА УДАЛЕНИЯ ★★★ -->
+                            <button class="delete-btn"
+                                    onclick="deleteUser({{ user.id }}, '{{ user.username }}')"
+                                    {% if user.id == request.user.id or user.role == 'admin' %}disabled{% endif %}>
+                                🗑️ Удалить
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -204,6 +255,36 @@
     </div>
 
     <script>
+        function deleteUser(userId, username) {
+    if (confirm(`❌ Вы уверены, что хотите удалить пользователя "${username}"?`)) {
+        fetch(`/api/delete-user/${userId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken(),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Обновляем страницу после удаления
+                location.reload();
+            } else {
+                alert('❌ Ошибка: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Ошибка при удалении пользователя');
+        });
+    }
+}
+
+// Функция для получения CSRF токена
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
         function filterUsers() {
             const usernameFilter = document.getElementById('searchInput').value.toLowerCase();
             const roleFilter = document.getElementById('roleSelect').value;
