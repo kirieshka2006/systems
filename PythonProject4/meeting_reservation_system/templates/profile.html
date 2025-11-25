@@ -424,16 +424,16 @@
                 <div class="user-role">{{ user.get_role_display }}</div>
             </div>
 
-            <div class="stats">
-                <div class="stat-item">
-                    <span class="stat-value">12</span>
-                    <span class="stat-label">Бронирований</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">85%</span>
-                    <span class="stat-label">Активность</span>
-                </div>
-            </div>
+<div class="stats">
+    <div class="stat-item">
+        <span class="stat-value">{{ bookings_count }}</span>
+        <span class="stat-label">Бронирований</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-value">85%</span>
+        <span class="stat-label">Активность</span>
+    </div>
+</div>
             <!-- ДОБАВЬ ЭТОТ БЛОК СЮДА -->
             <div class="user-details">
                 <div style="margin-bottom: 15px;">
@@ -454,9 +454,9 @@
 
         </div>
 <div class="history-section">
-    <button class="history-btn" onclick="showHistory()">
+    <a href="{% url 'booking_history' %}" class="history-btn" style="text-decoration: none; display: block;">
         📅 История бронирования
-    </button>
+    </a>
 </div>
         <!-- Основное содержимое -->
         <div class="profile-main">
@@ -763,10 +763,7 @@
     // Сначала закрываем все формы редактирования
     closeAllEditSections();
 
-    function showHistory() {
-        alert("📅 Функция 'История бронирования' будет добавлена позже!");
-        // Здесь потом будет переход на страницу истории
-    }
+
 
     // Открываем нужную форму
     if (section === 'profile') {

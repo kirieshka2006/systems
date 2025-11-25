@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>История бронирований - Панель менеджера</title>
+    <style>
+        body {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .back-btn:hover {
+            background: #5a6268;
+        }
+        .history-table {
+            background: #2d2d2d;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #404040;
+        }
+        th {
+            background: #3a3a3a;
+        }
+        .status-pending { color: #ffc107; }
+        .status-confirmed { color: #28a745; }
+        .status-cancelled { color: #dc3545; }
+        .status-completed { color: #17a2b8; }
+        .no-bookings {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+        }
+        .booking-row:hover {
+            background: #3a3a3a;
+        }
+        .user-info {
+            font-size: 12px;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if request.user.role == 'manager' %}
+        <a href="{% url 'manager_panel' %}" class="back-btn">← Назад в панель менеджера</a>
+        {% else %}
+        <a href="{% url 'admin_panel' %}" class="back-btn">← Назад в админ-панель</a>
+        {% endif %}
+
+        <div class="history-table">
+            <h2>📅 История бронирований - {% if request.user.role == 'manager' %}Панель менеджера{% else %}Админ-панель{% endif %}</h2>
+
+            {% if bookings %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Пользователь</th>
+                        <th>Комната</th>
+                        <th>Дата</th>
+                        <th>Время</th>
+                        <th>Продолжительность</th>
+                        <th>Статус</th>
+                        <th>Стоимость</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr class="booking-row">
+                        <td>
+                            <strong>{{ booking.user.username }}</strong>
+                            <div class="user-info">
+                                {{ booking.user.email }}<br>
+                                {{ booking.user.phone|default:"Телефон не указан" }}
+                            </div>
+                        </td>
+                        <td><strong>{{ booking.room.name }}</strong></td>
+                        <td>{{ booking.start_time|date:"d.m.Y" }}</td>
+                        <td>{{ booking.start_time|date:"H:i" }} - {{ booking.end_time|date:"H:i" }}</td>
+                        <td>{{ booking.duration_hours }} час{% if booking.duration_hours > 1 %}а{% endif %}</td>
+                        <td class="status-{{ booking.status }}">
+                            {% if booking.status == 'pending' %}⏳ Ожидание
+                            {% elif booking.status == 'confirmed' %}✅ Подтверждено
+                            {% elif booking.status == 'cancelled' %}❌ Отменено
+                            {% elif booking.status == 'completed' %}🔵 Завершено
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ booking.total_price }} руб</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="no-bookings">
+                <h3>📭 Бронирований не найдено</h3>
+                <p>В системе пока нет бронирований</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

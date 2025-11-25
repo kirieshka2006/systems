@@ -49,6 +49,9 @@ urlpatterns = [
     path('api/delete-booking/<int:booking_id>/', views.delete_booking, name='delete_booking'),
 
     path('api/delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
+
+    path('booking-history/', views.booking_history, name='booking_history'),
+
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

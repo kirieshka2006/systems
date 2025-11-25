@@ -405,10 +405,17 @@ def room_detail(request, room_id):
         messages.error(request, '❌ Комната не найдена!')
         return redirect('home')
 
+
 @login_required
 def profile_view(request):
     """Страница профиля"""
-    return render(request, 'profile.html', {'user': request.user})
+    # Получаем статистику бронирований
+    user_bookings_count = Booking.objects.filter(user=request.user).count()
+
+    return render(request, 'profile.html', {
+        'user': request.user,
+        'bookings_count': user_bookings_count
+    })
 
 
 @login_required
@@ -436,7 +443,6 @@ def manager_panel(request):
 
     from django.utils.timezone import get_current_timezone
 
-    # ★★★ СОЗДАЕМ СТРОКИ С ДАТАМИ В PYTHON ★★★
     for booking in bookings:
         tz = get_current_timezone()
         local_start = booking.start_time.astimezone(tz)
@@ -446,9 +452,7 @@ def manager_panel(request):
         booking.date_display = local_start.strftime("%d.%m.%Y")
         booking.time_display = f"{local_start.strftime('%H:%M')} - {local_end.strftime('%H:%M')}"
 
-        duration_delta = booking.end_time - booking.start_time
-        booking.duration_hours = duration_delta.seconds // 3600
-        booking.total_price = booking.duration_hours * booking.room.price_per_hour
+        # ★★★ НЕ присваиваем duration_hours и total_price - они теперь свойства ★★★
 
     return render(request, 'manager_panel.html', {
         'bookings': bookings,
@@ -485,9 +489,9 @@ def update_booking_status(request, booking_id):
         new_price = data.get('total_price')
         manager_comment = data.get('manager_comment')
 
-        # Менеджер обновил цену
+        # ★★★ СОХРАНЯЕМ ИЗМЕНЕННУЮ ЦЕНУ ★★★
         if new_price:
-            booking.total_price = Decimal(new_price)
+            booking.custom_price = Decimal(new_price)
 
         # Менеджер оставил комментарий
         if manager_comment is not None:
@@ -499,7 +503,7 @@ def update_booking_status(request, booking_id):
 
         booking.save()
 
-        # Если подтверждено — отправляем письмо
+        # Если подтверждено — отправляем письмо с ПРАВИЛЬНОЙ ценой
         if new_status == "confirmed":
             from .email_booking import send_booking_confirmation
             send_booking_confirmation(booking)
@@ -1086,3 +1090,12 @@ def delete_user(request, user_id):
 
     except User.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Пользователь не найден'})
+
+
+@login_required
+def booking_history(request):
+    """История бронирований - ВСЕГДА только СВОИ бронирования"""
+    # ★★★ ВНЕ ЗАВИСИМОСТИ ОТ РОЛИ - ПОКАЗЫВАЕМ ТОЛЬКО СВОИ БРОНИРОВАНИЯ ★★★
+    bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
+
+    return render(request, 'booking_history.html', {'bookings': bookings})

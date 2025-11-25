@@ -20,17 +20,47 @@
             margin-bottom: 20px;
         }
         .booking-card {
-            background: #2d2d2d;
-            padding: 20px;
-            margin: 15px 0;
-            border-radius: 10px;
-            border: 1px solid #404040;
+    background: #2d2d2d;
+    padding: 20px;
+    margin: 10px 0;
+    border-radius: 10px;
+    border: 1px solid #404040;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex; /* ★★★ ВСЕГДА FLEX ★★★ */
+    flex-direction: column; /* ★★★ ВСЕГДА COLUMN ★★★ */
+}
+        .booking-card:hover {
+            border-color: #007bff;
+        }
+        .booking-card.expanded {
+            background: #3a3a3a;
         }
         .booking-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+        }
+        .booking-preview {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .booking-details {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #404040;
+        }
+        .booking-card.expanded .booking-details {
+            display: block;
+        }
+        .expand-icon {
+            transition: transform 0.3s ease;
+        }
+        .booking-card.expanded .expand-icon {
+            transform: rotate(180deg);
         }
         .status-pending { color: #ffc107; }
         .status-confirmed { color: #28a745; }
@@ -41,6 +71,7 @@
             border-radius: 5px;
             cursor: pointer;
             margin-right: 10px;
+            margin-top: 10px;
         }
         .btn-confirm { background: #28a745; color: white; }
         .btn-cancel { background: #dc3545; color: white; }
@@ -60,7 +91,6 @@
             background: #6c757d !important;
             color: white !important;
         }
-
         .btn-delete:hover {
             background: #5a6268 !important;
         }
@@ -71,35 +101,39 @@
             font-weight: bold;
             border: 1px solid;
         }
-
         .category-economy {
             background: rgba(40, 167, 69, 0.1);
             border-color: #28a745;
             color: #28a745;
         }
-
         .category-standard {
             background: rgba(0, 123, 255, 0.1);
             border-color: #007bff;
             color: #007bff;
         }
-
         .category-comfort {
             background: rgba(255, 193, 7, 0.1);
             border-color: #ffc107;
             color: #ffc107;
         }
-
         .category-vip {
             background: rgba(108, 92, 231, 0.1);
             border-color: #6c5ce7;
             color: #6c5ce7;
         }
-
         .category-luxury {
             background: rgba(220, 53, 69, 0.1);
             border-color: #dc3545;
             color: #dc3545;
+        }
+        .preview-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .preview-info div {
+            font-size: 14px;
+            color: #ccc;
         }
     </style>
 </head>
@@ -125,7 +159,6 @@
         {% endfor %}
     </select>
 
-    <!-- ★★★ ДОБАВИМ ФИЛЬТР ПО КАТЕГОРИЯМ ★★★ -->
     <select class="filter-select" onchange="filterByCategory()">
         <option value="all">Все категории</option>
         <option value="economy">🟢 Эконом</option>
@@ -139,85 +172,129 @@
 <!-- Список бронирований -->
 <div id="bookings-list">
     {% for booking in bookings %}
-    <div class="booking-card" data-status="{{ booking.status }}" data-room="{{ booking.room.id }}" data-category="{{ booking.room.category }}">
+    <div class="booking-card" data-status="{{ booking.status }}" data-room="{{ booking.room.id }}" data-category="{{ booking.room.category }}" onclick="toggleBooking(this)">
         <div class="booking-header">
-            <h3>
-                {% if booking.room.category == 'economy' %}🟢
-                {% elif booking.room.category == 'standard' %}🔵
-                {% elif booking.room.category == 'comfort' %}🟡
-                {% elif booking.room.category == 'vip' %}🟣
-                {% elif booking.room.category == 'luxury' %}🔴
-                {% endif %}
-                {{ booking.room.name }}
-                | 👤 {{ booking.user.username }}
-            </h3>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <span class="room-category
-                    {% if booking.room.category == 'economy' %}category-economy
-                    {% elif booking.room.category == 'standard' %}category-standard
-                    {% elif booking.room.category == 'comfort' %}category-comfort
-                    {% elif booking.room.category == 'vip' %}category-vip
-                    {% elif booking.room.category == 'luxury' %}category-luxury{% endif %}">
-                    {% if booking.room.category == 'economy' %}🟢 Эконом
-                    {% elif booking.room.category == 'standard' %}🔵 Стандарт
-                    {% elif booking.room.category == 'comfort' %}🟡 Комфорт
-                    {% elif booking.room.category == 'vip' %}🟣 VIP
-                    {% elif booking.room.category == 'luxury' %}🔴 Люкс{% endif %}
-                </span>
-                <span class="status-{{ booking.status }}">
-                    {{ booking.get_status_display }}
-                </span>
+            <div class="booking-preview">
+                <div>
+                    <h3 style="margin: 0 0 5px 0;">
+                        {% if booking.room.category == 'economy' %}🟢
+                        {% elif booking.room.category == 'standard' %}🔵
+                        {% elif booking.room.category == 'comfort' %}🟡
+                        {% elif booking.room.category == 'vip' %}🟣
+                        {% elif booking.room.category == 'luxury' %}🔴
+                        {% endif %}
+                        {{ booking.room.name }}
+                        | 👤 {{ booking.user.username }}
+                    </h3>
+                    <div class="preview-info">
+                        <div><strong>📅</strong> {{ booking.date_display }}</div>
+                        <div><strong>⏰</strong> {{ booking.time_display }}</div>
+                        <div><strong>💰</strong> {{ booking.total_price }} руб</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span class="room-category
+                        {% if booking.room.category == 'economy' %}category-economy
+                        {% elif booking.room.category == 'standard' %}category-standard
+                        {% elif booking.room.category == 'comfort' %}category-comfort
+                        {% elif booking.room.category == 'vip' %}category-vip
+                        {% elif booking.room.category == 'luxury' %}category-luxury{% endif %}">
+                        {% if booking.room.category == 'economy' %}🟢 Эконом
+                        {% elif booking.room.category == 'standard' %}🔵 Стандарт
+                        {% elif booking.room.category == 'comfort' %}🟡 Комфорт
+                        {% elif booking.room.category == 'vip' %}🟣 VIP
+                        {% elif booking.room.category == 'luxury' %}🔴 Люкс{% endif %}
+                    </span>
+                    <span class="status-{{ booking.status }}">
+                        {{ booking.get_status_display }}
+                    </span>
+                    <span class="expand-icon">▼</span>
+                </div>
             </div>
         </div>
 
         <div class="booking-details">
-            <p><strong>📅 Дата и время:</strong>
-                {{ booking.date_display }}
-                с {{ booking.time_display }}
-            </p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+                <div>
+                    <p><strong>⏱️ Продолжительность:</strong> {{ booking.duration_hours }} часа</p>
+                    <p>
+                        <strong>💰 Стоимость:</strong>
+                        <input type="number" id="price-{{ booking.id }}" value="{{ booking.total_price }}"
+                               onclick="event.stopPropagation()"
+                               style="width: 120px; padding: 4px; background: #2d2d2d; color: #e0e0e0; border: 1px solid #404040;">
+                        руб
+                    </p>
+                    <p><strong>📞 Контакты:</strong> {{ booking.user.phone|default:"Не указан" }} | {{ booking.user.email }}</p>
+                </div>
+                <div>
+                    {% if booking.description %}
+                    <p><strong>💬 Комментарий клиента:</strong><br>{{ booking.description }}</p>
+                    {% endif %}
+                <p>
+                    <strong>💬 Комментарий менеджера:</strong><br>
 
-            <p><strong>⏱️ Продолжительность:</strong> {{ booking.duration_hours }} часа</p>
-            <p>
-                <strong>💰 Стоимость:</strong>
-                <input type="number" id="price-{{ booking.id }}" value="{{ booking.total_price }}"
-                       style="width: 120px; padding: 4px; background: #2d2d2d; color: #e0e0e0; border: 1px solid #404040;">
-                руб
-            </p>
-            {% if booking.description %}
-            <p><strong>💬 Комментарий:</strong> {{ booking.description }}</p>
-            <p>
-                <strong>💬 Комментарий менеджера:</strong><br>
-                <textarea id="manager-comment-{{ booking.id }}"
-                          style="width: 100%; height: 60px; padding: 6px; background: #2d2d2d; color: #e0e0e0; border: 1px solid #404040;">{{ booking.manager_comment }}</textarea>
-            </p>
+                    {% if booking.status == 'pending' %}
+                        <!-- Для ожидающих бронирований - поле ввода -->
+                        <textarea id="manager-comment-{{ booking.id }}"
+                          onclick="event.stopPropagation()"
+                          style="width: 100%; height: 60px; padding: 8px;
+                                 background: #2d2d2d; color: #e0e0e0;
+                                 border: 1px solid #007bff; border-radius: 6px;
+                                 resize: vertical;"
+                          placeholder="Введите комментарий при подтверждении или отклонении...">{{ booking.manager_comment|default:"" }}</textarea>
+                    {% else %}
+                        <!-- Для подтвержденных/отмененных - только просмотр -->
+                        {% if booking.manager_comment %}
+                            <div style="width: 100%; min-height: 50px; padding: 12px;
+                                        background: #2d2d2d;
+                                        color: #e0e0e0;
+                                        border: 1px solid #555;
+                                        border-radius: 8px;
+                                        white-space: pre-wrap;
+                                        margin-top: 5px;">
+                                💬 {{ booking.manager_comment }}
+                            </div>
+                        {% else %}
+                            <div style="width: 100%; min-height: 50px; padding: 12px;
+                                        background: rgba(108, 117, 125, 0.1);
+                                        color: #6c757d;
+                                        border: 1px dashed #6c757d;
+                                        border-radius: 8px;
+                                        white-space: pre-wrap;
+                                        font-style: italic;
+                                        margin-top: 5px;">
+                                📝 Комментарий отсутствует
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </p>
+                </div>
+            </div>
+
+            {% if booking.status == 'pending' %}
+            <div class="booking-actions">
+                <button class="btn btn-confirm" onclick="event.stopPropagation(); updateBookingStatus({{ booking.id }}, 'confirmed')">
+                    ✅ Подтвердить
+                </button>
+                <button class="btn btn-cancel" onclick="event.stopPropagation(); updateBookingStatus({{ booking.id }}, 'cancelled')">
+                    ❌ Отклонить
+                </button>
+            </div>
+            {% else %}
+            <div class="booking-actions">
+                <button class="btn btn-delete" onclick="event.stopPropagation(); deleteBooking({{ booking.id }})"
+                        style="background: #6c757d; color: white;">
+                    🗑️ Удалить
+                </button>
+
+                {% if booking.status == 'confirmed' %}
+                <button class="btn btn-cancel" onclick="event.stopPropagation(); updateBookingStatus({{ booking.id }}, 'cancelled')">
+                    ❌ Отменить
+                </button>
+                {% endif %}
+            </div>
             {% endif %}
-
-            <p><strong>📞 Контакты:</strong> {{ booking.user.phone|default:"Не указан" }} | {{ booking.user.email }}</p>
         </div>
-
-        {% if booking.status == 'pending' %}
-        <div class="booking-actions">
-            <button class="btn btn-confirm" onclick="updateBookingStatus({{ booking.id }}, 'confirmed')">
-                ✅ Подтвердить
-            </button>
-            <button class="btn btn-cancel" onclick="updateBookingStatus({{ booking.id }}, 'cancelled')">
-                ❌ Отклонить
-            </button>
-        </div>
-        {% else %}
-        <div class="booking-actions">
-            <button class="btn btn-delete" onclick="deleteBooking({{ booking.id }})"
-                    style="background: #6c757d; color: white;">
-                🗑️ Удалить
-            </button>
-
-            {% if booking.status == 'confirmed' %}
-            <button class="btn btn-cancel" onclick="updateBookingStatus({{ booking.id }}, 'cancelled')">
-                ❌ Отменить
-            </button>
-            {% endif %}
-        </div>
-        {% endif %}
     </div>
     {% empty %}
     <div class="booking-card">
@@ -227,50 +304,58 @@
 </div>
 
 <script>
+    function toggleBooking(card) {
+        card.classList.toggle('expanded');
+    }
+
     function filterByCategory() {
     const category = event.target.value;
     const bookings = document.querySelectorAll('.booking-card');
 
     bookings.forEach(booking => {
         if (category === 'all' || booking.dataset.category === category) {
-            booking.style.display = 'block';
+            booking.style.display = 'flex'; // ★★★ ВСЕГДА FLEX ★★★
         } else {
             booking.style.display = 'none';
         }
     });
 }
+
     function deleteBooking(bookingId) {
-    if (!confirm('❓ Вы уверены что хотите удалить это бронирование?')) {
-        return;
+        if (!confirm('❓ Вы уверены что хотите удалить это бронирование?')) {
+            return;
+        }
+
+        fetch(`/api/delete-booking/${bookingId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ Бронирование удалено!');
+                location.reload();
+            } else {
+                alert('❌ Ошибка: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            alert('❌ Ошибка при удалении');
+        });
     }
 
-    fetch(`/api/delete-booking/${bookingId}/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Показываем сообщение и перезагружаем страницу
-            alert('✅ Бронирование удалено!');
-            location.reload();
-        } else {
-            alert('❌ Ошибка: ' + data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Ошибка:', error);
-        alert('❌ Ошибка при удалении');
-    });
-}
-
-function updateBookingStatus(bookingId, newStatus) {
-
+    function updateBookingStatus(bookingId, newStatus) {
     let newPrice = document.getElementById(`price-${bookingId}`)?.value || null;
-    let managerComment = document.getElementById(`manager-comment-${bookingId}`)?.value || "";
+    let managerComment = "";
+
+    // ★★★ БЕРЕМ КОММЕНТАРИЙ ТОЛЬКО ЕСЛИ БРОНИРОВАНИЕ БЫЛО В ОЖИДАНИИ ★★★
+    if (newStatus !== 'pending') {
+        managerComment = document.getElementById(`manager-comment-${bookingId}`)?.value || "";
+    }
 
     fetch(`/api/update-booking-status/${bookingId}/`, {
         method: 'POST',
@@ -295,13 +380,13 @@ function updateBookingStatus(bookingId, newStatus) {
     });
 }
 
-function filterBookings() {
+    function filterBookings() {
     const status = event.target.value;
     const bookings = document.querySelectorAll('.booking-card');
 
     bookings.forEach(booking => {
         if (status === 'all' || booking.dataset.status === status) {
-            booking.style.display = 'block';
+            booking.style.display = 'flex'; // ★★★ ВСЕГДА FLEX ★★★
         } else {
             booking.style.display = 'none';
         }
@@ -314,12 +399,21 @@ function filterByRoom() {
 
     bookings.forEach(booking => {
         if (roomId === 'all' || booking.dataset.room === roomId) {
-            booking.style.display = 'block';
+            booking.style.display = 'flex'; // ★★★ ВСЕГДА FLEX ★★★
         } else {
             booking.style.display = 'none';
         }
     });
 }
+
+    // Закрываем карточку при клике вне её
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.booking-card')) {
+            document.querySelectorAll('.booking-card.expanded').forEach(card => {
+                card.classList.remove('expanded');
+            });
+        }
+    });
 </script>
 
 </body>

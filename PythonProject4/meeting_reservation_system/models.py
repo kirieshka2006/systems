@@ -182,6 +182,31 @@ class Booking(models.Model):
         ('cancelled', '❌ Отменено'),
         ('completed', '🔵 Завершено'),
     ]
+    # ★★★ ДОБАВЬ ЭТО ПОЛЕ ДЛЯ ХРАНЕНИЯ ИЗМЕНЕННОЙ ЦЕНЫ ★★★
+    custom_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Измененная цена менеджером"
+    )
+
+    @property
+    def duration_hours(self):
+        """Возвращает продолжительность в часах"""
+        if self.start_time and self.end_time:
+            duration = self.end_time - self.start_time
+            return int(duration.total_seconds() // 3600)
+        return 0
+
+    @property
+    def total_price(self):
+        """Возвращает общую стоимость"""
+        if self.custom_price:
+            return self.custom_price
+        if hasattr(self, 'room') and self.room:
+            return self.duration_hours * self.room.price_per_hour
+        return 0
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
