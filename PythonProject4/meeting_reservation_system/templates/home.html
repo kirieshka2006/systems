@@ -733,6 +733,7 @@
                 {% if user.role == 'admin' %}
                 <a href="{% url 'admin_panel' %}">👥 Управление пользователями</a>
                 <a href="{% url 'room_management_main' %}">🚪 Управление комнатами</a>
+                <a href="{% url 'office_management' %}">🏢 Управление офисами</a>
                 <div class="dropdown-divider"></div>
                 {% endif %}
                 <a href="{% url 'manager_panel' %}">📋 Подтверждение бронирований</a>
@@ -834,7 +835,7 @@
                     </div>
                 </a>
 
-                <a href="#" class="dashboard-item">
+                <a href="{% url 'offices' %}" class="dashboard-item">
                     <span class="icon">📍</span>
                     <div class="menu-content">
                         <span class="menu-text">Офисы</span>

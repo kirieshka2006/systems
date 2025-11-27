@@ -31,6 +31,33 @@
         .back-btn:hover {
             background: #5a6268;
         }
+
+        /* ★★★ СТАТИСТИКА ★★★ */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-item {
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #404040;
+        }
+        .stat-value {
+            color: #007bff;
+            font-size: 24px;
+            font-weight: bold;
+            display: block;
+        }
+        .stat-label {
+            color: #ccc;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
         .history-table {
             background: #2d2d2d;
             border-radius: 10px;
@@ -68,6 +95,26 @@
 
         <div class="history-table">
             <h2>📅 История бронирования</h2>
+
+            <!-- ★★★ СТАТИСТИКА ★★★ -->
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-value">{{ bookings_count }}</span>
+                    <span class="stat-label">Всего</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" style="color: #28a745;">{{ active_bookings_count }}</span>
+                    <span class="stat-label">Активных</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" style="color: #17a2b8;">{{ completed_bookings_count }}</span>
+                    <span class="stat-label">Завершено</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" style="color: #dc3545;">{{ cancelled_bookings_count }}</span>
+                    <span class="stat-label">Отменено</span>
+                </div>
+            </div>
 
             {% if bookings %}
             <table>

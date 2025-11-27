@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Наши офисы - Яндекс.Карты</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #2d2d2d;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid #404040;
+        }
+
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #5a6268;
+        }
+
+        .offices-container {
+            display: grid;
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .office-card {
+            background: #2d2d2d;
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid #404040;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .office-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .office-info h3 {
+            color: #fff;
+            margin: 0 0 10px 0;
+            font-size: 20px;
+        }
+
+        .office-details {
+            color: #ccc;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .office-details div {
+            margin-bottom: 8px;
+        }
+
+        .yandex-btn {
+            background: #ff0000;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .yandex-btn:hover {
+            background: #e00000;
+            transform: translateY(-2px);
+        }
+
+.map-container {
+    margin-top: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #555;
+}
+
+.map-iframe {
+    width: 100%;
+    height: 500px; /* ★★★ УВЕЛИЧИЛ ВЫСОТУ ★★★ */
+    border: none;
+}
+
+        .contacts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .contact-item {
+            background: #3a3a3a;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ff0000;
+        }
+
+        .contact-label {
+            color: #ccc;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .contact-value {
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'home' %}" class="back-btn">← Назад на главную</a>
+        <h1>🏢 Наши офисы на Яндекс.Картах</h1>
+        <p>Выберите офис для просмотра на карте и получения подробной информации</p>
+    </div>
+
+<div class="offices-container">
+    {% for office in offices %}
+    <div class="office-card">
+        <div class="office-header">
+            <div class="office-info">
+                <h3>🏢 {{ office.name }}</h3>
+                <div class="office-details">
+                    <div>📍 <strong>Адрес:</strong> {{ office.address }}</div>
+                    <div>🕒 <strong>Часы работы:</strong> {{ office.work_hours }}</div>
+                    <div>📞 <strong>Телефон:</strong> {{ office.phone }}</div>
+                </div>
+            </div>
+            <a href="{{ office.yandex_map_url }}" target="_blank" class="yandex-btn">
+                📍 Открыть в Яндекс.Картах
+            </a>
+        </div>
+
+        <div class="map-container">
+            <iframe class="map-iframe"
+                    src="https://yandex.ru/map-widget/v1/?ll={{ office.longitude }}%2C{{ office.latitude }}&z=16&l=map"
+                    frameborder="0">
+            </iframe>
+        </div>
+
+        <div class="contacts-grid">
+            {% if office.parking %}
+            <div class="contact-item">
+                <div class="contact-label">🚗 Парковка</div>
+                <div class="contact-value">{{ office.parking }}</div>
+            </div>
+            {% endif %}
+
+            {% if office.transport %}
+            <div class="contact-item">
+                <div class="contact-label">🚌 Транспорт</div>
+                <div class="contact-value">{{ office.transport }}</div>
+            </div>
+            {% endif %}
+
+            {% if office.amenities %}
+            <div class="contact-item">
+                <div class="contact-label">🎯 Удобства</div>
+                <div class="contact-value">{{ office.amenities }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 40px; color: #999;">
+        <h3>🏢 Офисы не найдены</h3>
+        <p>Информация об офисах будет добавлена позже</p>
+    </div>
+    {% endfor %}
+</div>
+</body>
+</html>

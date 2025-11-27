@@ -18,7 +18,51 @@
             grid-template-columns: 1fr 2fr;
             gap: 30px;
         }
+        select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #404040;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
 
+        select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+
+        input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #404040;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        input[type="date"]:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.8);
+            cursor: pointer;
+        }
+
+        option {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
         .profile-sidebar {
             background: #2d2d2d;
             padding: 30px;
@@ -90,13 +134,13 @@
         .stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 10px;
             margin: 25px 0;
         }
 
         .stat-item {
             background: #3a3a3a;
-            padding: 15px;
+            padding: 12px;
             border-radius: 10px;
             text-align: center;
             border: 1px solid #555;
@@ -104,14 +148,15 @@
 
         .stat-value {
             color: #007bff;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             display: block;
         }
 
         .stat-label {
             color: #ccc;
-            font-size: 12px;
+            font-size: 11px;
+            margin-top: 5px;
         }
 
         .info-item {
@@ -378,30 +423,47 @@
             justify-content: center;
             gap: 8px;
             width:107%;}
-.history-section {
-    grid-column: 1;
-    grid-row: 2;
-    width: 280px;
-    text-align: center;
+
+
+.profile-sidebar > div:has(.history-btn) {
+    margin-left: -30px;
+    margin-right: -30px;
+    padding-left: 30px;
+    padding-right: 30px;
+    margin-top: 20px;
 }
 
 .history-btn {
     background: #28a745;
     color: white;
-    padding: 15px 30px;
+    padding: 15px 20px;
     border-radius: 10px;
     border: none;
     cursor: pointer;
     font-weight: bold;
     transition: all 0.3s;
-    display: inline-block;
+    display: block;
     font-size: 16px;
+    width: 100% ;
+    max-width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    text-decoration: none;
+    margin: 0;
 }
 
 .history-btn:hover {
     background: #218838;
     transform: translateY(-3px);
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* Контейнер для кнопки истории */
+.profile-sidebar > div:last-of-type {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0;
 }
     </style>
 
@@ -424,16 +486,16 @@
                 <div class="user-role">{{ user.get_role_display }}</div>
             </div>
 
-<div class="stats">
-    <div class="stat-item">
-        <span class="stat-value">{{ bookings_count }}</span>
-        <span class="stat-label">Бронирований</span>
-    </div>
-    <div class="stat-item">
-        <span class="stat-value">85%</span>
-        <span class="stat-label">Активность</span>
-    </div>
-</div>
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-value">{{ bookings_count }}</span>
+                    <span class="stat-label">Бронирований</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ activity_percentage }}%</span>
+                    <span class="stat-label">Активность</span>
+                </div>
+            </div>
             <!-- ДОБАВЬ ЭТОТ БЛОК СЮДА -->
             <div class="user-details">
                 <div style="margin-bottom: 15px;">
@@ -447,17 +509,19 @@
                 </div>
                 {% endif %}
             </div>
+            <!-- История бронирования -->
+            <div style="margin: 30px -30px 0 -30px; padding: 0 30px;">
+    <a href="{% url 'booking_history' %}" class="history-btn" style="text-decoration: none; display: block;">
+        📅 История бронирования
+    </a>
+</div>
              <!-- КОНТЕЙНЕР ДЛЯ КНОПОК -->
                     <a href="{% url 'home' %}" class="back-link">
                                     ← Назад на главную
                     </a>
 
         </div>
-<div class="history-section">
-    <a href="{% url 'booking_history' %}" class="history-btn" style="text-decoration: none; display: block;">
-        📅 История бронирования
-    </a>
-</div>
+
         <!-- Основное содержимое -->
         <div class="profile-main">
             <!-- Основная информация (только просмотр) -->
@@ -572,9 +636,27 @@
             </div>
         </div>
 
-        <form method="post" enctype="multipart/form-data" action="{% url 'update_profile' %}">
-            {% csrf_token %}
-
+         <!-- ★★★ ДОБАВЬ ЭТОТ БЛОК ДЛЯ ОШИБОК ★★★ -->
+    <div class="messages" id="profileErrors">
+        {% for message in messages %}
+            {% if 'profile' in message.tags or 'username' in message.tags %}
+                <div class="message {% if 'error' in message.tags %}error{% elif 'success' in message.tags %}success{% endif %}">
+                    {{ message }}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+                <!-- Сообщения -->
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="message {% if 'error' in message.tags %}error{% elif 'success' in message.tags %}success{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+    <form method="post" enctype="multipart/form-data" action="{% url 'update_profile' %}">
+        {% csrf_token %}
+    <form method="post" enctype="multipart/form-data" action="{% url 'update_profile' %}" onsubmit="return validatePhoneBeforeSubmit()">
             <div class="form-group">
                 <label>Имя пользователя:</label>
                 <input type="text" name="username" value="{{ user.username }}" required>
@@ -585,7 +667,7 @@
 
             <div class="form-group">
                 <label>Телефон:</label>
-                <input type="text" name="phone" value="{{ user.phone|default:'' }}" placeholder="+7 (XXX) XXX-XX-XX">
+                <input type="text" name="phone" value="{{ user.phone|default:'' }}" placeholder="+7 (XXX) XXX-XX-XX" oninput="validatePhone(this)">
             </div>
             <!-- ★★★ ДОБАВЬ ЗДЕСЬ НОВЫЕ ПОЛЯ ДЛЯ РЕДАКТИРОВАНИЯ ★★★ -->
             <div class="form-group">
@@ -695,24 +777,20 @@
                     </button>
                 </div>
 
-                <div class="info-item">
-                    <div class="info-label">Статус аккаунта</div>
-                    <div class="info-value">🟢 Активен</div>
-                </div>
+
 
                 <div class="info-item">
                     <div class="info-label">Последний вход</div>
-                    <div class="info-value">Сегодня в 14:30</div>
+                    <div class="info-value">
+                        {% if user.last_login %}
+                            {{ user.last_login|date:"d.m.Y H:i" }}
+                        {% else %}
+                            Никогда
+                        {% endif %}
+                    </div>
                 </div>
 
-                <!-- Сообщения -->
-                <div class="messages">
-                    {% for message in messages %}
-                        <div class="message {% if 'error' in message.tags %}error{% elif 'success' in message.tags %}success{% endif %}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                </div>
+
 
                 <!-- Форма смены пароля (скрыта по умолчанию) -->
                 <div class="edit-form" id="editPasswordForm">
@@ -759,19 +837,29 @@
     <script>
 
 
-        function openEditSection(section) {
+function openEditSection(section) {
     // Сначала закрываем все формы редактирования
     closeAllEditSections();
 
-
-
     // Открываем нужную форму
+    let formElement;
     if (section === 'profile') {
-        document.getElementById('editProfileForm').classList.add('active');
+        formElement = document.getElementById('editProfileForm');
+        formElement.classList.add('active');
     } else if (section === 'password') {
-        document.getElementById('editPasswordForm').classList.add('active');
+        formElement = document.getElementById('editPasswordForm');
+        formElement.classList.add('active');
     } else if (section === 'avatar') {
-        document.getElementById('editAvatarForm').classList.add('active');
+        formElement = document.getElementById('editAvatarForm');
+        formElement.classList.add('active');
+    }
+
+    // Прокручиваем к открытой форме
+    if (formElement) {
+        formElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
     }
 }
 
@@ -796,18 +884,73 @@ document.addEventListener('DOMContentLoaded', function() {
     const messages = document.querySelectorAll('.message.error');
     if (messages.length > 0) {
         const errorText = messages[0].textContent.toLowerCase();
-        if (errorText.includes('пароль')) {
+
+        if (errorText.includes('пароль') || errorText.includes('password')) {
             openEditSection('password');
         } else if (errorText.includes('аватар') || errorText.includes('avatar')) {
             openEditSection('avatar');
+        } else if (errorText.includes('пользователь') || errorText.includes('username') || errorText.includes('имя')) {
+            openEditSection('profile');
+            // Прокручиваем к ошибке
+            document.getElementById('profileErrors').scrollIntoView({ behavior: 'smooth' });
         } else {
             openEditSection('profile');
         }
     }
 });
 
-// ★★★★ ВСТАВЬ ЭТО В САМЫЙ КОНЕЦ ★★★★
-// Показываем поле для кода если email не подтвержден
+// Валидация телефона
+function validatePhone(input) {
+    // Удаляем всё кроме цифр, +, (), -
+    let phone = input.value.replace(/[^\d+()-\s]/g, '');
+
+    // Ограничиваем длину (максимум 20 символов)
+    if (phone.length > 20) {
+        phone = phone.substring(0, 20);
+    }
+
+    // Автоматическое форматирование
+    if (phone.startsWith('+7') || phone.startsWith('7') || phone.startsWith('8')) {
+        // Российский номер - форматируем как +7 (XXX) XXX-XX-XX
+        let digits = phone.replace(/\D/g, '');
+
+        if (digits.startsWith('7') || digits.startsWith('8')) {
+            digits = '7' + digits.substring(1);
+        }
+
+        if (digits.length >= 1) {
+            phone = '+7';
+            if (digits.length > 1) {
+                phone += ' (' + digits.substring(1, 4);
+            }
+            if (digits.length > 4) {
+                phone += ') ' + digits.substring(4, 7);
+            }
+            if (digits.length > 7) {
+                phone += '-' + digits.substring(7, 9);
+            }
+            if (digits.length > 9) {
+                phone += '-' + digits.substring(9, 11);
+            }
+        }
+    }
+
+    input.value = phone;
+}
+
+// Проверка телефона перед отправкой формы
+function validatePhoneBeforeSubmit() {
+    const phoneInputs = document.querySelectorAll('input[name="phone"]');
+    phoneInputs.forEach(input => {
+        const phone = input.value.replace(/\D/g, ''); // Только цифры
+        if (phone && phone.length < 11) {
+            alert('Номер телефона должен содержать минимум 11 цифр');
+            input.focus();
+            return false;
+        }
+    });
+    return true;
+}
 
 // Показываем поле для кода при изменении email
 document.addEventListener('DOMContentLoaded', function() {

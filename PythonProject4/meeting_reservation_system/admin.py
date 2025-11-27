@@ -1,6 +1,13 @@
 from django.contrib import admin
-from .models import User, Room, Booking, SupportTicket, TicketResponse, FAQ
+from .models import User, Room, Booking, SupportTicket, TicketResponse, FAQ,  Office
 
+
+@admin.register(Office)
+class OfficeAdmin(admin.ModelAdmin):
+    list_display = ['name', 'address', 'phone', 'is_active']
+    list_editable = ['is_active']
+    search_fields = ['name', 'address']
+    list_filter = ['is_active']
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):

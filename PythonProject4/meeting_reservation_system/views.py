@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import update_session_auth_hash
 from django.core.files.storage import FileSystemStorage
 from django.utils import timezone
-from .models import Room, User, EmailConfirmation, Booking
+from .models import Room, User, EmailConfirmation, Booking, Office
 from django.http import JsonResponse
 from datetime import datetime, timedelta
 from .models import SupportTicket, TicketResponse
@@ -408,13 +408,26 @@ def room_detail(request, room_id):
 
 @login_required
 def profile_view(request):
-    """Страница профиля"""
-    # Получаем статистику бронирований
-    user_bookings_count = Booking.objects.filter(user=request.user).count()
+    """Страница профиля со статистикой активности"""
+    user = request.user
+
+    # Получаем все бронирования пользователя
+    user_bookings = Booking.objects.filter(user=user)
+
+    # Статистика бронирований
+    total_bookings = user_bookings.count()
+    completed_bookings = user_bookings.filter(status='completed').count()
+
+    # ★★★ ПРОСТОЙ РАСЧЕТ: успешные от всех бронирований ★★★
+    if total_bookings > 0:
+        activity_percentage = (completed_bookings / total_bookings) * 100
+    else:
+        activity_percentage = 0
 
     return render(request, 'profile.html', {
-        'user': request.user,
-        'bookings_count': user_bookings_count
+        'user': user,
+        'bookings_count': total_bookings,
+        'activity_percentage': round(activity_percentage),
     })
 
 
@@ -513,17 +526,32 @@ def update_booking_status(request, booking_id):
     except Booking.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Бронь не найдена'})
 
+
 @login_required
 def admin_user_profile(request, user_id):
     """Просмотр профиля пользователя для админа"""
-    # Разрешаем админам, менеджерам и суперпользователям
     if request.user.role not in ['admin', 'manager'] and not request.user.is_superuser:
         messages.error(request, '❌ Доступ запрещен!')
-        return redirect('admin_panel')  # Редирект на админ-панель вместо главной
+        return redirect('admin_panel')
 
     try:
         user = User.objects.get(id=user_id)
-        return render(request, 'admin_user_profile.html', {'target_user': user})
+
+        # Получаем бронирования пользователя
+        user_bookings = Booking.objects.filter(user=user).order_by('-created_at')
+        bookings_count = user_bookings.count()
+        active_bookings_count = user_bookings.filter(status__in=['pending', 'confirmed']).count()
+        completed_bookings_count = user_bookings.filter(status='completed').count()
+        cancelled_bookings_count = user_bookings.filter(status='cancelled').count()
+
+        return render(request, 'admin_user_profile.html', {
+            'target_user': user,
+            'user_bookings': user_bookings,
+            'bookings_count': bookings_count,
+            'active_bookings_count': active_bookings_count,
+            'completed_bookings_count': completed_bookings_count,
+            'cancelled_bookings_count': cancelled_bookings_count
+        })
     except User.DoesNotExist:
         messages.error(request, '❌ Пользователь не найден!')
         return redirect('admin_panel')
@@ -1095,7 +1123,132 @@ def delete_user(request, user_id):
 @login_required
 def booking_history(request):
     """История бронирований - ВСЕГДА только СВОИ бронирования"""
-    # ★★★ ВНЕ ЗАВИСИМОСТИ ОТ РОЛИ - ПОКАЗЫВАЕМ ТОЛЬКО СВОИ БРОНИРОВАНИЯ ★★★
-    bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
+    # Получаем бронирования пользователя
+    user_bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
 
-    return render(request, 'booking_history.html', {'bookings': bookings})
+    # ★★★ ДОБАВЛЯЕМ СТАТИСТИКУ ★★★
+    bookings_count = user_bookings.count()
+    active_bookings_count = user_bookings.filter(status__in=['pending', 'confirmed']).count()
+    completed_bookings_count = user_bookings.filter(status='completed').count()
+    cancelled_bookings_count = user_bookings.filter(status='cancelled').count()
+
+    return render(request, 'booking_history.html', {
+        'bookings': user_bookings,
+        'bookings_count': bookings_count,
+        'active_bookings_count': active_bookings_count,
+        'completed_bookings_count': completed_bookings_count,
+        'cancelled_bookings_count': cancelled_bookings_count
+    })
+
+
+
+
+def offices_view(request):
+    """Страница с офисами и картами"""
+    offices = Office.objects.filter(is_active=True)
+    return render(request, 'offices.html', {'offices': offices})
+
+
+@login_required
+def office_management(request):
+    """Управление офисами для админа"""
+    if request.user.role != 'admin':  # ← ИЗМЕНИЛ НА ТОТ ЖЕ СТАНДАРТ
+        messages.error(request, '❌ Доступ запрещен!')
+        return redirect('home')
+
+    offices = Office.objects.all()
+    return render(request, 'office_management.html', {'offices': offices})
+
+@login_required
+def edit_office(request, office_id):
+    if request.user.role != 'admin':
+        return JsonResponse({'success': False, 'error': 'Доступ запрещен!'})
+
+    try:
+        office = Office.objects.get(id=office_id)
+
+        if request.method == 'POST':
+            office.name = request.POST.get('name')
+            office.address = request.POST.get('address')
+            office.phone = request.POST.get('phone')
+            office.work_hours = request.POST.get('work_hours')
+            office.latitude = request.POST.get('latitude')
+            office.longitude = request.POST.get('longitude')
+            office.yandex_map_url = request.POST.get('yandex_map_url')
+            office.parking = request.POST.get('parking')
+            office.transport = request.POST.get('transport')
+            office.amenities = request.POST.get('amenities')
+            # ★★★ УБЕРИ ЭТУ СТРОКУ ★★★
+            # office.marker_text = request.POST.get('marker_text', 'Офис')
+            office.is_active = True
+
+            office.save()
+            messages.success(request, '✅ Офис успешно обновлен!')
+            return JsonResponse({'success': True})
+
+        return JsonResponse({
+            'success': True,
+            'office': {
+                'id': office.id,
+                'name': office.name,
+                'address': office.address,
+                'phone': office.phone,
+                'work_hours': office.work_hours,
+                'latitude': office.latitude,
+                'longitude': office.longitude,
+                'yandex_map_url': office.yandex_map_url,
+                'parking': office.parking,
+                'transport': office.transport,
+                'amenities': office.amenities,
+                # ★★★ УБЕРИ ЭТО ПОЛЕ ИЗ ОТВЕТА ★★★
+                # 'marker_text': office.marker_text,
+                'is_active': office.is_active,
+            }
+        })
+
+    except Office.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Офис не найден'})
+
+@login_required
+def add_office(request):
+    if request.user.role != 'admin':
+        return JsonResponse({'success': False, 'error': 'Доступ запрещен!'})
+
+    if request.method == 'POST':
+        try:
+            office = Office.objects.create(
+                name=request.POST.get('name'),
+                address=request.POST.get('address'),
+                phone=request.POST.get('phone'),
+                work_hours=request.POST.get('work_hours'),
+                latitude=request.POST.get('latitude'),
+                longitude=request.POST.get('longitude'),
+                yandex_map_url=request.POST.get('yandex_map_url'),
+                parking=request.POST.get('parking'),
+                transport=request.POST.get('transport'),
+                amenities=request.POST.get('amenities'),
+                marker_text=request.POST.get('marker_text', 'Офис'),
+                is_active=True  # ★★★ ВСЕГДА TRUE ★★★
+            )
+
+            messages.success(request, '✅ Офис успешно добавлен!')
+            return JsonResponse({'success': True, 'office_id': office.id})
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Неверный метод запроса'})
+
+@login_required
+def delete_office(request, office_id):
+    """Удаление офиса"""
+    if request.user.role != 'admin':  # ← ИЗМЕНИЛ НА ТОТ ЖЕ СТАНДАРТ
+        return JsonResponse({'success': False, 'error': 'Доступ запрещен!'})
+
+    try:
+        office = Office.objects.get(id=office_id)
+        office.delete()
+        messages.success(request, '✅ Офис успешно удален!')
+        return JsonResponse({'success': True})
+    except Office.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Офис не найден'})

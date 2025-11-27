@@ -75,6 +75,14 @@
         }
         .btn-confirm { background: #28a745; color: white; }
         .btn-cancel { background: #dc3545; color: white; }
+
+        .btn-complete {
+            background: #17a2b8;
+            color: white;
+        }
+        .btn-complete:hover {
+            background: #138496;
+        }
         .filters {
             margin: 20px 0;
             display: flex;
@@ -144,30 +152,31 @@
 <h1>📋 Панель менеджера - Бронирования</h1>
 
 <!-- Фильтры -->
-<div class="filters">
-    <select class="filter-select" onchange="filterBookings()">
-        <option value="all">Все статусы</option>
-        <option value="pending">⏳ Ожидание</option>
-        <option value="confirmed">✅ Подтверждено</option>
-        <option value="cancelled">❌ Отменено</option>
-    </select>
+    <div class="filters">
+        <select class="filter-select" onchange="filterBookings()">
+            <option value="all">Все статусы</option>
+            <option value="pending">⏳ Ожидание</option>
+            <option value="confirmed">✅ Подтверждено</option>
+            <option value="completed">🔵 Завершено</option>
+            <option value="cancelled">❌ Отменено</option>
+        </select>
 
-    <select class="filter-select" onchange="filterByRoom()">
-        <option value="all">Все комнаты</option>
-        {% for room in rooms %}
-        <option value="{{ room.id }}">{{ room.name }}</option>
-        {% endfor %}
-    </select>
+        <select class="filter-select" onchange="filterByRoom()">
+            <option value="all">Все комнаты</option>
+            {% for room in rooms %}
+            <option value="{{ room.id }}">{{ room.name }}</option>
+            {% endfor %}
+        </select>
 
-    <select class="filter-select" onchange="filterByCategory()">
-        <option value="all">Все категории</option>
-        <option value="economy">🟢 Эконом</option>
-        <option value="standard">🔵 Стандарт</option>
-        <option value="comfort">🟡 Комфорт</option>
-        <option value="vip">🟣 VIP</option>
-        <option value="luxury">🔴 Люкс</option>
-    </select>
-</div>
+        <select class="filter-select" onchange="filterByCategory()">
+            <option value="all">Все категории</option>
+            <option value="economy">🟢 Эконом</option>
+            <option value="standard">🔵 Стандарт</option>
+            <option value="comfort">🟡 Комфорт</option>
+            <option value="vip">🟣 VIP</option>
+            <option value="luxury">🔴 Люкс</option>
+        </select>
+    </div>
 
 <!-- Список бронирований -->
 <div id="bookings-list">
@@ -288,6 +297,9 @@
                 </button>
 
                 {% if booking.status == 'confirmed' %}
+                <button class="btn btn-complete" onclick="event.stopPropagation(); updateBookingStatus({{ booking.id }}, 'completed')">
+                    🔵 Завершить
+                </button>
                 <button class="btn btn-cancel" onclick="event.stopPropagation(); updateBookingStatus({{ booking.id }}, 'cancelled')">
                     ❌ Отменить
                 </button>

@@ -52,6 +52,13 @@ urlpatterns = [
 
     path('booking-history/', views.booking_history, name='booking_history'),
 
+    path('offices/', views.offices_view, name='offices'),
+    path('office-management/', views.office_management, name='office_management'),
+    path('office-management/add/', views.add_office, name='add_office'),
+    path('office-management/<int:office_id>/edit/', views.edit_office, name='edit_office'),
+    path('office-management/<int:office_id>/delete/', views.delete_office, name='delete_office'),
+
+
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

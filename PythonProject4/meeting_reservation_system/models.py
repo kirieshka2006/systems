@@ -220,3 +220,33 @@ class Booking(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.room.name} - {self.start_time.strftime('%d.%m.%Y %H:%M')}"
+
+
+class Office(models.Model):
+    name = models.CharField(max_length=200, verbose_name="Название офиса")
+    address = models.CharField(max_length=300, verbose_name="Адрес")
+    phone = models.CharField(max_length=20, verbose_name="Телефон", blank=True)
+    work_hours = models.CharField(max_length=100, verbose_name="Часы работы", blank=True)
+    latitude = models.FloatField(verbose_name="Широта")
+    longitude = models.FloatField(verbose_name="Долгота")
+    yandex_map_url = models.URLField(verbose_name="Ссылка на Яндекс.Карты", blank=True)
+    description = models.TextField(verbose_name="Описание", blank=True)
+    marker_text = models.CharField(max_length=100, verbose_name="Текст маркера", blank=True,
+                                   default="Офис", help_text="Текст, отображаемый на маркере карты")
+
+    # ★★★ ВЕРНИ ПОЛЕ, НО СДЕЛАЙ ЕГО ВСЕГДА TRUE ★★★
+    is_active = models.BooleanField(default=True, verbose_name="Активен")
+
+    parking = models.CharField(max_length=100, verbose_name="Парковка", blank=True)
+    transport = models.CharField(max_length=100, verbose_name="Транспорт", blank=True)
+    amenities = models.CharField(max_length=200, verbose_name="Удобства", blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Офис"
+        verbose_name_plural = "Офисы"
+
+    def __str__(self):
+        return self.name
