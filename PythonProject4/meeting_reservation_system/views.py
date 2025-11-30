@@ -858,6 +858,10 @@ def add_room(request):
             capacity = request.POST.get('capacity')
             price_per_hour = request.POST.get('price_per_hour')
             equipment = request.POST.get('equipment', '')
+            category = request.POST.get('category', 'standard')
+
+            # 👉 получаем выбранный офис
+            office_id = request.POST.get('office')
 
             room = Room.objects.create(
                 name=name,
@@ -865,9 +869,15 @@ def add_room(request):
                 capacity=capacity,
                 price_per_hour=price_per_hour,
                 equipment=equipment,
+                category=category,
+                office_id=office_id if office_id else None,   # ← ВАЖНО!
                 is_active=True
             )
+            office_id = request.POST.get("office")
+            if office_id:
+                room.office_id = office_id
 
+            room.save()
             # Обработка изображения
             image = request.FILES.get('image')
             if image:
@@ -899,6 +909,8 @@ def edit_room(request, room_id):
             if request.user.role == 'admin':
                 room.name = request.POST.get('name', room.name)
                 room.location = request.POST.get('location', room.location)
+                office_id = request.POST.get("office")
+                room.office_id = office_id if office_id else None
                 room.capacity = request.POST.get('capacity', room.capacity)
 
             room.price_per_hour = request.POST.get('price_per_hour', room.price_per_hour)
@@ -953,6 +965,7 @@ def get_room_data(request, room_id):
                 'id': room.id,
                 'name': room.name,
                 'location': room.location,
+                "office_id": room.office.id if room.office else None,
                 'capacity': room.capacity,
                 'price_per_hour': str(room.price_per_hour),
                 'equipment': room.equipment
@@ -1030,51 +1043,16 @@ def room_management_category(request, category):
     rooms = Room.objects.filter(category=category)
     category_display = dict(Room.CATEGORY_CHOICES)[category]
 
+    # 👉 ВАЖНО: загружаем офисы
+    offices = Office.objects.all()
+
     return render(request, 'room_management_category.html', {
         'rooms': rooms,
         'category': category,
-        'category_display': category_display
+        'category_display': category_display,
+        'offices': offices  # 👉 Передаем офисы в шаблон
     })
-@login_required
-def add_room(request):
-    """Добавление новой комнаты - только админ"""
-    if request.user.role != 'admin':
-        return JsonResponse({'success': False, 'error': 'Доступ запрещен!'})
 
-    if request.method == 'POST':
-        try:
-            name = request.POST.get('name')
-            location = request.POST.get('location')
-            capacity = request.POST.get('capacity')
-            price_per_hour = request.POST.get('price_per_hour')
-            equipment = request.POST.get('equipment', '')
-            category = request.POST.get('category', 'standard')  # ← ДОБАВИЛ КАТЕГОРИЮ
-
-            room = Room.objects.create(
-                name=name,
-                location=location,
-                capacity=capacity,
-                price_per_hour=price_per_hour,
-                equipment=equipment,
-                category=category,  # ← ДОБАВИЛ КАТЕГОРИЮ
-                is_active=True
-            )
-
-            # Обработка изображения
-            image = request.FILES.get('image')
-            if image:
-                fs = FileSystemStorage(location='media/rooms/')
-                filename = fs.save(image.name, image)
-                room.image = f'rooms/{filename}'
-                room.save()
-
-            messages.success(request, '✅ Комната успешно добавлена!')
-            return JsonResponse({'success': True, 'room_id': room.id})
-
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-
-    return JsonResponse({'success': False, 'error': 'Неверный метод запроса'})
 
 @login_required
 def toggle_room_status(request, room_id):

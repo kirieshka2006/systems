@@ -26,6 +26,7 @@ class FAQ(models.Model):
     def __str__(self):
         return self.question
 
+
 class User(AbstractUser):
     ROLE_CHOICES = [
         ('admin', 'Администратор'),
@@ -44,20 +45,18 @@ class User(AbstractUser):
     email_verification_code = models.CharField(max_length=6, blank=True, null=True)
     email_verified = models.BooleanField(default=False)
 
-    # ★★★ НОВЫЕ ПОЛЯ ★★★
-    first_name = models.CharField(max_length=30, blank=True)  # Имя
-    last_name = models.CharField(max_length=30, blank=True)  # Фамилия
-    patronymic = models.CharField(max_length=30, blank=True)  # Отчество
-    birth_date = models.DateField(null=True, blank=True)  # Дата рождения
-    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True)  # Пол
+    first_name = models.CharField(max_length=30, blank=True)
+    last_name = models.CharField(max_length=30, blank=True)
+    patronymic = models.CharField(max_length=30, blank=True)
+    birth_date = models.DateField(null=True, blank=True)
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True)
 
-    # Добавляем related_name чтобы избежать конфликтов
     groups = models.ManyToManyField(
         'auth.Group',
         verbose_name='groups',
         blank=True,
         help_text='The groups this user belongs to.',
-        related_name='custom_user_set',  # ← ИЗМЕНИЛ
+        related_name='custom_user_set',
         related_query_name='user',
     )
     user_permissions = models.ManyToManyField(
@@ -65,7 +64,7 @@ class User(AbstractUser):
         verbose_name='user permissions',
         blank=True,
         help_text='Specific permissions for this user.',
-        related_name='custom_user_set',  # ← ИЗМЕНИЛ
+        related_name='custom_user_set',
         related_query_name='user',
     )
 
@@ -83,8 +82,8 @@ class SupportTicket(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    last_activity = models.DateTimeField(auto_now=True)  # Дата последней активности
-    auto_close_date = models.DateTimeField(null=True, blank=True)  # Дата авто-закрытия
+    last_activity = models.DateTimeField(auto_now=True)
+    auto_close_date = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.subject}"
@@ -98,6 +97,35 @@ class TicketResponse(models.Model):
 
     def __str__(self):
         return f"Ответ на {self.ticket.subject}"
+
+
+class Office(models.Model):
+    name = models.CharField(max_length=200, verbose_name="Название офиса")
+    address = models.CharField(max_length=300, verbose_name="Адрес")
+    phone = models.CharField(max_length=20, verbose_name="Телефон", blank=True)
+    work_hours = models.CharField(max_length=100, verbose_name="Часы работы", blank=True)
+    latitude = models.FloatField(verbose_name="Широта")
+    longitude = models.FloatField(verbose_name="Долгота")
+    yandex_map_url = models.URLField(verbose_name="Ссылка на Яндекс.Карты", blank=True)
+    description = models.TextField(verbose_name="Описание", blank=True)
+    marker_text = models.CharField(max_length=100, verbose_name="Текст маркера", blank=True,
+                                   default="Офис")
+
+    is_active = models.BooleanField(default=True, verbose_name="Активен")
+
+    parking = models.CharField(max_length=100, verbose_name="Парковка", blank=True)
+    transport = models.CharField(max_length=100, verbose_name="Транспорт", blank=True)
+    amenities = models.CharField(max_length=200, verbose_name="Удобства", blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Офис"
+        verbose_name_plural = "Офисы"
+
+    def __str__(self):
+        return self.name
 
 
 class Room(models.Model):
@@ -120,10 +148,21 @@ class Room(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     name = models.CharField(max_length=100)
     location = models.CharField(max_length=200)
+
+    # ✔ связь с офисом
+    office = models.ForeignKey(
+        "Office",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='rooms',
+        verbose_name="Офис"
+    )
+
     capacity = models.IntegerField()
     equipment = models.TextField(
         blank=True,
-        help_text="Вводите каждый пункт оборудования с новой строки. Например:\n- Проектор\n- Маркерная доска\n- Wi-Fi\n- Кондиционер"
+        help_text="Вводите каждый пункт с новой строки."
     )
     price_per_hour = models.DecimalField(max_digits=10, decimal_places=2)
     image = models.ImageField(upload_to='rooms/', blank=True, null=True)
@@ -135,35 +174,27 @@ class Room(models.Model):
 
     @property
     def equipment_list(self):
-        """Возвращает список оборудования"""
         if self.equipment:
             return [item.strip() for item in self.equipment.split('\n') if item.strip()]
         return []
 
     def get_equipment_columns(self):
-        """Разделяет оборудование на две колонки"""
         items = self.equipment_list
-        if not items:
-            return [], []
-
-        mid = (len(items) + 1) // 2  # Делим пополам
+        mid = (len(items) + 1) // 2
         return items[:mid], items[mid:]
 
 
 class EmailConfirmation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='email_confirmations')
     email = models.EmailField()
-    code = models.CharField(max_length=6)  # 6-значный код
+    code = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
     confirmed_at = models.DateTimeField(null=True, blank=True)
 
     def is_expired(self):
-        """Проверяет, не устарел ли код (15 минут)"""
-        expiration_date = self.created_at + timedelta(minutes=15)
-        return timezone.now() > expiration_date
+        return timezone.now() > self.created_at + timedelta(minutes=15)
 
     def generate_code(self):
-        """Создает 6-значный код"""
         return str(random.randint(100000, 999999))
 
     def save(self, *args, **kwargs):
@@ -182,31 +213,20 @@ class Booking(models.Model):
         ('cancelled', '❌ Отменено'),
         ('completed', '🔵 Завершено'),
     ]
-    # ★★★ ДОБАВЬ ЭТО ПОЛЕ ДЛЯ ХРАНЕНИЯ ИЗМЕНЕННОЙ ЦЕНЫ ★★★
-    custom_price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        verbose_name="Измененная цена менеджером"
-    )
+
+    custom_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     @property
     def duration_hours(self):
-        """Возвращает продолжительность в часах"""
         if self.start_time and self.end_time:
-            duration = self.end_time - self.start_time
-            return int(duration.total_seconds() // 3600)
+            return int((self.end_time - self.start_time).total_seconds() // 3600)
         return 0
 
     @property
     def total_price(self):
-        """Возвращает общую стоимость"""
         if self.custom_price:
             return self.custom_price
-        if hasattr(self, 'room') and self.room:
-            return self.duration_hours * self.room.price_per_hour
-        return 0
+        return self.duration_hours * self.room.price_per_hour
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
@@ -214,39 +234,9 @@ class Booking(models.Model):
     end_time = models.DateTimeField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
-    participants_count = models.IntegerField(default=1)  # ★★★ кол-во участников
-    description = models.TextField(blank=True)  # ★★★ описание встречи
+    participants_count = models.IntegerField(default=1)
+    description = models.TextField(blank=True)
     manager_comment = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.room.name} - {self.start_time.strftime('%d.%m.%Y %H:%M')}"
-
-
-class Office(models.Model):
-    name = models.CharField(max_length=200, verbose_name="Название офиса")
-    address = models.CharField(max_length=300, verbose_name="Адрес")
-    phone = models.CharField(max_length=20, verbose_name="Телефон", blank=True)
-    work_hours = models.CharField(max_length=100, verbose_name="Часы работы", blank=True)
-    latitude = models.FloatField(verbose_name="Широта")
-    longitude = models.FloatField(verbose_name="Долгота")
-    yandex_map_url = models.URLField(verbose_name="Ссылка на Яндекс.Карты", blank=True)
-    description = models.TextField(verbose_name="Описание", blank=True)
-    marker_text = models.CharField(max_length=100, verbose_name="Текст маркера", blank=True,
-                                   default="Офис", help_text="Текст, отображаемый на маркере карты")
-
-    # ★★★ ВЕРНИ ПОЛЕ, НО СДЕЛАЙ ЕГО ВСЕГДА TRUE ★★★
-    is_active = models.BooleanField(default=True, verbose_name="Активен")
-
-    parking = models.CharField(max_length=100, verbose_name="Парковка", blank=True)
-    transport = models.CharField(max_length=100, verbose_name="Транспорт", blank=True)
-    amenities = models.CharField(max_length=200, verbose_name="Удобства", blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "Офис"
-        verbose_name_plural = "Офисы"
-
-    def __str__(self):
-        return self.name
+        return f"{self.user.username} - {self.room.name}"

@@ -325,12 +325,28 @@
             <p>Минимальное время бронирования: 1 час</p>
             <p>Максимальное время бронирования: 4 часа</p>
         </div>
-
-        <div id="location" class="tab-content">
+        {% if room.office %}
+        <div id="location" class="tab-content" >
             <h3>Как добраться</h3>
-            <p>{{ room.location }}</p>
-            <p>🚇 Ближайшее метро: уточняется</p>
+            <p><strong>Офис:</strong> {{ room.office.name }}</p>
+            <p><strong>Адрес:</strong> {{ room.office.address }}</p>
+            <p><strong>Телефон:</strong> {{ room.office.phone }}</p>
+            <p><strong>Часы работы:</strong> {{ room.office.work_hours }}</p>
+
+            {% if room.office.transport %}
+                <p><strong>Транспорт рядом:</strong> {{ room.office.transport }}</p>
+            {% endif %}
+
+            {% if room.office.parking %}
+                <p><strong>Парковка:</strong> {{ room.office.parking }}</p>
+            {% endif %}
+
+            <iframe style="width:100%; height:300px; border-radius:10px; margin-top:10px;"
+                src="https://yandex.ru/map-widget/v1/?ll={{ room.office.longitude }}%2C{{ room.office.latitude }}&z=16&l=map"
+                frameborder="0">
+            </iframe>
         </div>
+        {% endif %}
 
         <div id="reviews" class="tab-content">
             <h3>Отзывы</h3>

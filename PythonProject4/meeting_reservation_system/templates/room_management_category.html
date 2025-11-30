@@ -314,6 +314,15 @@
                     <input type="text" name="location" required>
                 </div>
                 <div class="form-group">
+                    <label>Офис:</label>
+                    <select name="office">
+                        <option value="">— Не выбран —</option>
+                        {% for office in offices %}
+                            <option value="{{ office.id }}">{{ office.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>Вместимость:</label>
                     <input type="number" name="capacity" min="1" required>
                 </div>
@@ -359,6 +368,7 @@
                         document.querySelector('input[name="capacity"]').value = room.capacity;
                         document.querySelector('input[name="price_per_hour"]').value = room.price_per_hour;
                         document.querySelector('textarea[name="equipment"]').value = room.equipment;
+                        document.querySelector('select[name="office"]').value = room.office_id || "";
                         currentRoomId = roomId;
                         document.getElementById('roomModal').style.display = 'block';
                     } else {
