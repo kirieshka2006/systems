@@ -208,10 +208,10 @@ class EmailConfirmation(models.Model):
 
 class Booking(models.Model):
     STATUS_CHOICES = [
-        ('pending', '⏳ Ожидание'),
-        ('confirmed', '✅ Подтверждено'),
-        ('cancelled', '❌ Отменено'),
-        ('completed', '🔵 Завершено'),
+        ('pending', ' Ожидание'),
+        ('confirmed', ' Подтверждено'),
+        ('cancelled', ' Отменено'),
+        ('completed', ' Завершено'),
     ]
 
     custom_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)

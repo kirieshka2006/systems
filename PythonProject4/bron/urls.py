@@ -60,7 +60,9 @@ urlpatterns = [
 
     path("api/change-role/<int:user_id>/", views.change_user_role, name="change_user_role"),
 
-
+    path('report/', views.report_page, name='report_page'),
+    path('report/export_excel/', views.export_excel, name='export_excel'),
+    path('report/export_pdf/', views.export_pdf, name='export_pdf'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

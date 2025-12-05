@@ -134,7 +134,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'kirieshkayub2006@gmail.com'  # ЗАМЕНИ на свой Gmail
-EMAIL_HOST_PASSWORD = 'srkf zhpt uvig sgbc'  # Пароль из 16 символов
+EMAIL_HOST_PASSWORD = 'ixwm lmhd wpng qemv'  # Пароль из 16 символов
 EMAIL_USE_LOCALTIME = True
 
 SITE_DOMAIN = 'http://localhost:8000'

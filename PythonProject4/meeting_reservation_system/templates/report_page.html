@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Отчёт по бронированиям</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+        }
+
+        /* Фильтры */
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #404040;
+        }
+
+        .filters label {
+            margin-right: 5px;
+            color: #ccc;
+        }
+
+        .filters input,
+        .filters select {
+            padding: 6px 10px;
+            background: #3a3a3a;
+            border: 1px solid #555;
+            border-radius: 6px;
+            color: #fff;
+        }
+
+        .filters button {
+            background: #6ea0f8;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filters button:hover {
+            background: #4f82e0;
+        }
+
+        /* Таблица */
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .report-table th, .report-table td {
+            border: 1px solid #404040;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .report-table th {
+            background: #2d2d2d;
+        }
+
+        .report-table tr:nth-child(even) {
+            background: #2a2a2a;
+        }
+
+        /* Статусы */
+        .status-confirmed { color: #28a745; font-weight: bold; }
+        .status-cancelled { color: #dc3545; font-weight: bold; }
+        .status-finished { color: #ffc107; font-weight: bold; }
+
+        /* Кнопки экспорта */
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .export-buttons button {
+            background: #6ea0f8;
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .export-buttons button:hover {
+            background: #4f82e0;
+        }
+
+        /* Мобильная адаптация */
+        @media (max-width: 768px) {
+            .filters {
+                flex-direction: column;
+            }
+        }
+        .back-btn-fixed {
+            position: fixed;  /* фиксируем в левом верхнем углу */
+            top: 30px;
+            left: 30px;
+            padding: 12px 20px;
+            background-color: #007bff; /* синий цвет */
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            z-index: 1000; /* чтобы всегда сверху */
+            transition: all 0.3s ease;
+        }
+        .back-btn-fixed:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{% url 'home' %}" class="back-btn-fixed">← Назад</a>
+        <h1 style="margin-left: 400px; margin-top: 10px;">Отчёт по бронированиям</h1>
+
+        <!-- Фильтры -->
+        <form method="get" action="{% url 'report_page' %}" class="filters">
+            <div>
+                <label>Начало периода:</label>
+                <input type="date" name="start_date" value="{{ request.GET.start_date }}">
+            </div>
+            <div>
+                <label>Конец периода:</label>
+                <input type="date" name="end_date" value="{{ request.GET.end_date }}">
+            </div>
+            <div>
+                <label>Комната:</label>
+                <select name="room">
+                    <option value="">Все</option>
+                    {% for room in rooms %}
+                    <option value="{{ room.id }}" {% if request.GET.room == room.id_str %}selected{% endif %}>{{ room.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>Статус:</label>
+                <select name="status">
+                    <option value="">Все</option>
+                    {% for key, val in statuses.items %}
+                    <option value="{{ key }}" {% if request.GET.status == key %}selected{% endif %}>{{ val }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <button type="submit">Показать</button>
+            </div>
+        </form>
+
+        <!-- Таблица с результатами -->
+        <table class="report-table">
+            <tr>
+                <th>Дата</th>
+                <th>Комната</th>
+                <th>Пользователь</th>
+                <th>Начало</th>
+                <th>Конец</th>
+                <th>Статус</th>
+            </tr>
+            {% for b in bookings %}
+            <tr>
+                <td>{{ b.start_time|date:"d.m.Y" }}</td>
+                <td>{{ b.room.name }}</td>
+                <td>{{ b.user.username }}</td>
+                <td>{{ b.start_time|date:"H:i" }}</td>
+                <td>{{ b.end_time|date:"H:i" }}</td>
+                <td class="
+                    {% if b.status == 'confirmed' %}status-confirmed{% endif %}
+                    {% if b.status == 'cancelled' %}status-cancelled{% endif %}
+                    {% if b.status == 'finished' %}status-finished{% endif %}
+                ">
+                    {{ b.get_status_display }}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align:center;">Нет данных</td></tr>
+            {% endfor %}
+        </table>
+
+        <!-- Кнопки экспорта -->
+        <div class="export-buttons">
+            <form method="get" action="{% url 'export_excel' %}">
+                {% for key, val in request.GET.items %}
+                <input type="hidden" name="{{ key }}" value="{{ val }}">
+                {% endfor %}
+                <button type="submit">Экспорт в Excel</button>
+            </form>
+            <form method="get" action="{% url 'export_pdf' %}">
+                {% for key, val in request.GET.items %}
+                <input type="hidden" name="{{ key }}" value="{{ val }}">
+                {% endfor %}
+                <button type="submit">Экспорт в PDF</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

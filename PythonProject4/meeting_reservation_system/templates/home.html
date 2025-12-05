@@ -698,6 +698,7 @@
 
     </style>
 </head>
+
 <body>
 
 
@@ -737,7 +738,7 @@
                 <div class="dropdown-divider"></div>
                 {% endif %}
                 <a href="{% url 'manager_panel' %}">📋 Подтверждение бронирований</a>
-                <a href="javascript:void(0)" onclick="showStatistics()">📊 Статистика</a>
+                <a href="{% url 'report_page' %}">📊 Отчёты</a>
             </div>
         </div>
         {% endif %}

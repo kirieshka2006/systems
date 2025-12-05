@@ -12,7 +12,158 @@ from datetime import datetime, timedelta
 from .models import SupportTicket, TicketResponse
 import json
 from decimal import Decimal
+from django.http import HttpResponse
+from django.utils.dateparse import parse_date
+from django.conf import settings
+import pandas as pd
+import io
+import pdfkit
+from django.utils.timezone import localtime  # вверху файла, если ещё не импортировано
+from openpyxl import load_workbook
 
+
+# Настройка пути к wkhtmltopdf
+PDFKIT_CONFIG = pdfkit.configuration(
+    wkhtmltopdf=r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+)
+
+STATUS_CHOICES = dict(Booking.STATUS_CHOICES)
+
+# Вынесем фильтрацию в отдельную функцию
+def get_filtered_bookings(request):
+    bookings = Booking.objects.all()
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    room_id = request.GET.get('room')
+    status = request.GET.get('status')
+
+    if start_date:
+        bookings = bookings.filter(start_time__date__gte=parse_date(start_date))
+    if end_date:
+        bookings = bookings.filter(end_time__date__lte=parse_date(end_date))
+    if room_id:
+        bookings = bookings.filter(room_id=room_id)
+    if status:
+        bookings = bookings.filter(status=status)
+    return bookings
+
+# Страница отчёта
+def report_page(request):
+    rooms = Room.objects.all()
+    # Добавляем строковое представление id, чтобы шаблон не ругался
+    for r in rooms:
+        r.id_str = str(r.id)
+
+    bookings = get_filtered_bookings(request)
+    return render(request, 'report_page.html', {
+        'bookings': bookings,
+        'rooms': rooms,
+        'statuses': STATUS_CHOICES,
+        'request': request,
+    })
+
+# --- Экспорт в Excel ---
+def export_excel(request):
+    bookings = get_filtered_bookings(request)
+
+    data = []
+    for b in bookings:
+        start_time = b.start_time.astimezone(None)
+        end_time = b.end_time.astimezone(None)
+        data.append({
+            "Дата": b.start_time.astimezone(timezone.get_default_timezone()).strftime("%d.%m.%Y"),
+            'Комната': b.room.name,
+            'Пользователь': b.user.username,
+            'Начало': start_time.strftime('%H:%M'),
+            'Конец': end_time.strftime('%H:%M'),
+            'Статус': b.get_status_display(),
+        })
+
+    df = pd.DataFrame(data)
+    buffer = io.BytesIO()
+
+    # Создаем Excel файл
+    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Бронирования')
+
+    # Настройка ширины колонок по содержимому
+    buffer.seek(0)
+    wb = load_workbook(buffer)
+    ws = wb.active
+
+    for column_cells in ws.columns:
+        max_length = 0
+        column = column_cells[0].column_letter  # Получаем букву колонки
+        for cell in column_cells:
+            try:
+                cell_length = len(str(cell.value))
+                if cell_length > max_length:
+                    max_length = cell_length
+            except:
+                pass
+        adjusted_width = max_length + 2  # добавляем немного отступа
+        ws.column_dimensions[column].width = adjusted_width
+
+    buffer2 = io.BytesIO()
+    wb.save(buffer2)
+    buffer2.seek(0)
+
+    response = HttpResponse(
+        buffer2,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=bookings.xlsx'
+    return response
+
+# --- Экспорт в PDF ---
+def export_pdf(request):
+    bookings = get_filtered_bookings(request)
+
+    # Создаем HTML с корректной кодировкой и шрифтами
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="ru">
+    <head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: "Arial", "Times New Roman", sans-serif; font-size: 12px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #000; padding: 5px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+    </head>
+    <body>
+    <h1>Отчёт по бронированиям</h1>
+    <table>
+    <tr>
+        <th>Дата</th>
+        <th>Комната</th>
+        <th>Пользователь</th>
+        <th>Начало</th>
+        <th>Конец</th>
+        <th>Статус</th>
+    </tr>
+    """
+
+    for b in bookings:
+        start_local = localtime(b.start_time).strftime('%H:%M')
+        end_local = localtime(b.end_time).strftime('%H:%M')
+        html_content += (f"<tr>"
+                         f"<td>{b.start_time.strftime('%d.%m.%Y')}</td>"
+                         f"<td>{b.room.name}</td>"
+                         f"<td>{b.user.username}</td>"
+                         f"<td>{start_local}</td>"
+                         f"<td>{end_local}</td>"
+                         f"<td>{b.get_status_display()}</td></tr>")
+
+    html_content += "</table></body></html>"
+
+    # Генерация PDF через pdfkit с конфигурацией
+    pdf_file = pdfkit.from_string(html_content, False, configuration=PDFKIT_CONFIG)
+
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="bookings.pdf"'
+    return response
 
 @login_required
 def ticket_response_form(request, ticket_id):
@@ -23,17 +174,7 @@ def ticket_response_form(request, ticket_id):
     except SupportTicket.DoesNotExist:
         return JsonResponse({'error': 'Тикет не найден'}, status=404)
 
-def support_view(request):
-    """Страница техподдержки"""
-    context = {
-        'my_tickets': SupportTicket.objects.filter(user=request.user).order_by(
-            '-created_at') if request.user.is_authenticated else [],
-    }
 
-    if request.user.is_authenticated and request.user.role in ['admin', 'manager']:
-        context['all_tickets'] = SupportTicket.objects.all().order_by('-created_at')
-
-    return render(request, 'support.html', context)
 
 
 @login_required
