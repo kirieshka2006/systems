@@ -753,19 +753,19 @@
     </div>
 </div>
 <div class="filters-section" style="background: #2d2d2d; padding: 25px; border-radius: 15px; margin-bottom: 25px; border: 1px solid #404040;">
-    <h3 style="margin: 0 0 20px 0; color: #fff;">🔍 Фильтры поиска</h3>
+    <h3 style="margin: 0 0 20px 0; color: #fff;">Фильтры поиска</h3>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
         <!-- Поиск по названию -->
         <div>
-            <label style="display: block; margin-bottom: 8px; color: #ccc; font-weight: bold;">🚪 Название комнаты</label>
+            <label style="display: block; margin-bottom: 8px; color: #ccc; font-weight: bold;">Название комнаты</label>
             <input type="text" id="searchInput" placeholder="Введите название..."
                    style="width: 94%; padding: 12px; background: #3a3a3a; border: 1px solid #555; border-radius: 8px; color: #fff;">
         </div>
 
         <!-- Фильтр по категории -->
         <div>
-            <label style="display: block; margin-bottom: 8px; color: #ccc; font-weight: bold;">🎯 Уровень комнаты</label>
+            <label style="display: block; margin-bottom: 8px; color: #ccc; font-weight: bold;">Уровень комнаты</label>
             <select id="categoryFilter" style="width: 100%; padding: 12px; background: #3a3a3a; border: 1px solid #555; border-radius: 8px; color: #fff;">
                 <option value="all">Все категории</option>
                 <option value="economy">🟢 Эконом</option>
@@ -778,7 +778,7 @@
 
         <!-- Фильтр по цене -->
         <div>
-            <label style="display: block; margin-bottom: 8px; color: #ccc; font-weight: bold;">💰 Цена за час</label>
+            <label style="display: block; margin-bottom: 8px; color: #ccc; font-weight: bold;">Цена за час</label>
             <select id="priceFilter" style="width: 100%; padding: 12px; background: #3a3a3a; border: 1px solid #555; border-radius: 8px; color: #fff;">
                 <option value="all">Любая цена</option>
                 <option value="0-1000">До 1000 руб</option>
@@ -790,7 +790,7 @@
 
         <!-- Фильтр по вместимости -->
         <div>
-            <label style="display: block; margin-bottom: 8px; color: #ccc; font-weight: bold;">👥 Вместимость</label>
+            <label style="display: block; margin-bottom: 8px; color: #ccc; font-weight: bold;">Вместимость</label>
             <select id="capacityFilter" style="width: 100%; padding: 12px; background: #3a3a3a; border: 1px solid #555; border-radius: 8px; color: #fff;">
                 <option value="all">Любая вместимость</option>
                 <option value="1-5">До 5 человек</option>
@@ -799,9 +799,19 @@
                 <option value="20+">Более 20 человек</option>
             </select>
         </div>
+        <!-- Фильтр по местоположению (офисам) -->
+        <div>
+            <label style="display: block; margin-bottom: 8px; color: #ccc; font-weight: bold;">Месторасположение (офис)</label>
+            <select id="officeFilter" style="width: 100%; padding: 12px; background: #3a3a3a; border: 1px solid #555; border-radius: 8px; color: #fff;">
+                <option value="all">Все офисы</option>
+                {% for office in offices %}
+                    <option value="{{ office.id }}">{{ office.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
             {% if user.is_authenticated and user.role in 'admin manager' %}
         <div>
-            <label style="display: block; margin-bottom: 8px; color: #ccc; font-weight: bold;">📊 Статус комнаты</label>
+            <label style="display: block; margin-bottom: 8px; color: #ccc; font-weight: bold;">Статус комнаты</label>
             <select id="statusFilter" style="width: 100%; padding: 12px; background: #3a3a3a; border: 1px solid #555; border-radius: 8px; color: #fff;">
                 <option value="all">Все статусы</option>
                 <option value="active">✅ Активна</option>
@@ -809,13 +819,15 @@
             </select>
         </div>
         {% endif %}
+
+
     </div>
 
     <!-- Кнопки управления фильтрами -->
    <div style="margin-top: 20px;">
         <button onclick="resetFilters()"
                 style="background: #6c757d; color: white; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer;">
-            🔄 Сбросить все фильтры
+            Сбросить все фильтры
         </button>
     </div>
 
@@ -891,7 +903,11 @@
         <!-- ОСНОВНОЕ СОДЕРЖИМОЕ -->
         <div class="rooms" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
             {% for room in rooms %}
-            <div class="room-card" data-price="{{ room.price_per_hour }}" data-capacity="{{ room.capacity }}" data-category="{{ room.category }}">
+            <div class="room-card"
+                 data-price="{{ room.price_per_hour }}"
+                 data-capacity="{{ room.capacity }}"
+                 data-category="{{ room.category }}"
+                 data-office="{{ room.office.id }}">
                 <!-- ЗАГОЛОВОК СВЕРХУ -->
                 <div class="room-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h3 style="margin: 0;">
@@ -977,57 +993,93 @@ function showStatistics() {
     alert('📊 Статистика будет здесь!');
 }
 
-function applyFilters() {
-    const searchText = document.getElementById('searchInput').value.toLowerCase();
-    const category = document.getElementById('categoryFilter').value;
-    const priceRange = document.getElementById('priceFilter').value;
-    const capacityRange = document.getElementById('capacityFilter').value;
+document.addEventListener('DOMContentLoaded', function() {
 
-    // ★★★ ДОБАВИЛ ФИЛЬТР СТАТУСА ★★★
-    const statusFilter = document.getElementById('statusFilter') ? document.getElementById('statusFilter').value : 'all';
+    // Элементы фильтров (могут отсутствовать — проверяем)
+    const officeSelect = document.getElementById('officeFilter');
+    const searchInput = document.getElementById('searchInput');
+    const categorySelect = document.getElementById('categoryFilter');
+    const priceSelect = document.getElementById('priceFilter');
+    const capacitySelect = document.getElementById('capacityFilter');
+    const statusSelect = document.getElementById('statusFilter');
+
+    // Повесим слушатели (если элемент есть)
+    if (officeSelect) officeSelect.addEventListener('change', applyFilters);
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (categorySelect) categorySelect.addEventListener('change', applyFilters);
+    if (priceSelect) priceSelect.addEventListener('change', applyFilters);
+    if (capacitySelect) capacitySelect.addEventListener('change', applyFilters);
+    if (statusSelect) statusSelect.addEventListener('change', applyFilters);
+
+    // Вызовем один раз при загрузке
+    applyFilters();
+});
+
+function applyFilters() {
+    // Получаем значения фильтров (без упрощений)
+    const searchText = (document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '');
+    const category = (document.getElementById('categoryFilter') ? document.getElementById('categoryFilter').value : 'all');
+    const priceRange = (document.getElementById('priceFilter') ? document.getElementById('priceFilter').value : 'all');
+    const capacityRange = (document.getElementById('capacityFilter') ? document.getElementById('capacityFilter').value : 'all');
+    const officeValue = (document.getElementById('officeFilter') ? document.getElementById('officeFilter').value : 'all');
+    const statusFilter = (document.getElementById('statusFilter') ? document.getElementById('statusFilter').value : 'all');
+
+    // Отладочная информация — открой консоль (F12) и посмотри
+    console.log('applyFilters called. officeValue=', officeValue);
 
     const roomCards = document.querySelectorAll('.room-card');
     let visibleCount = 0;
 
     roomCards.forEach(card => {
-        const roomName = card.querySelector('h3').textContent.toLowerCase();
-        const roomCategory = card.querySelector('h3').innerHTML.includes('🟢') ? 'economy' :
-                           card.querySelector('h3').innerHTML.includes('🔵') ? 'standard' :
-                           card.querySelector('h3').innerHTML.includes('🟡') ? 'comfort' :
-                           card.querySelector('h3').innerHTML.includes('🟣') ? 'vip' :
-                           card.querySelector('h3').innerHTML.includes('🔴') ? 'luxury' : '';
+        // читаем data-атрибуты строго как строки
+        const roomOffice = (card.dataset.office !== undefined && card.dataset.office !== null) ? String(card.dataset.office) : '';
+        const roomCategory = card.dataset.category ? String(card.dataset.category) : '';
+        // для названия ищем текст в h3
+        const nameEl = card.querySelector('h3');
+        const roomName = nameEl ? nameEl.textContent.toLowerCase() : '';
 
-        // Поиск цены и вместимости (используй твой работающий вариант)
-        const priceText = card.querySelector('p').textContent;
+        // Отладка per-card
+        // console.log('card office=', roomOffice, 'card category=', roomCategory);
+
+        // Проверка офиса — приводим к строкам, пустая строка означает "нет офиса"
+        const matchesOffice = (officeValue === 'all') || (officeValue !== '' && roomOffice === String(officeValue));
+
+        // (Оставляем твои функции проверки цены/вместимости)
+        // Если у тебя есть отдельные функции checkPriceFilter и checkCapacityFilter — они будут использованы
+        const priceText = (card.querySelector('p') ? card.querySelector('p').textContent : '');
         let price = 0;
+        let capacity = 0;
         const allNumbers = priceText.match(/\d+/g);
         if (allNumbers && allNumbers.length >= 3) {
             price = parseInt(allNumbers[2]);
         }
-
-        let capacity = 0;
         if (allNumbers && allNumbers.length >= 2) {
             capacity = parseInt(allNumbers[1]);
         }
 
-        // ★★★ ПОИСК СТАТУСА КОМНАТЫ ★★★
-let roomStatus = 'active'; // по умолчанию
-const statusElement = card.querySelector('div[style*="color"]');
-if (statusElement) {
-    const statusText = statusElement.textContent.toLowerCase();
-    if (statusText.includes('активна')) roomStatus = 'active';
-    else if (statusText.includes('скрыта')) roomStatus = 'hidden';
-}
+        // статус (как у тебя)
+        let roomStatus = 'active';
+        const statusElement = card.querySelector('div[style*="color"]');
+        if (statusElement) {
+            const statusText = statusElement.textContent.toLowerCase();
+            if (statusText.includes('актив')) roomStatus = 'active';
+            else if (statusText.includes('скрыта')) roomStatus = 'hidden';
+            else if (statusText.includes('ремонт')) roomStatus = 'maintenance';
+            else if (statusText.includes('неактив')) roomStatus = 'inactive';
+        }
 
-        // Проверяем все фильтры
+        // проверки
         const matchesSearch = roomName.includes(searchText);
-        const matchesCategory = category === 'all' || roomCategory === category;
-        const matchesPrice = checkPriceFilter(price, priceRange);
-        const matchesCapacity = checkCapacityFilter(capacity, capacityRange);
-        const matchesStatus = statusFilter === 'all' || roomStatus === statusFilter;
+        const matchesCategory = (category === 'all' || roomCategory === category);
+        const matchesPrice = (typeof checkPriceFilter === 'function') ? checkPriceFilter(price, priceRange) : true;
+        const matchesCapacity = (typeof checkCapacityFilter === 'function') ? checkCapacityFilter(capacity, capacityRange) : true;
+        const matchesStatus = (statusFilter === 'all' || roomStatus === statusFilter);
 
-        if (matchesSearch && matchesCategory && matchesPrice && matchesCapacity && matchesStatus) {
-            card.style.display = 'block';
+        // Отладочная строка (раскомментируй, если хочешь смотреть много логов)
+        // console.log({roomName, roomOffice, officeValue, matchesOffice, matchesCategory, matchesPrice, matchesCapacity, matchesStatus});
+
+        if (matchesSearch && matchesCategory && matchesOffice && matchesPrice && matchesCapacity && matchesStatus) {
+            card.style.display = '';
             visibleCount++;
         } else {
             card.style.display = 'none';

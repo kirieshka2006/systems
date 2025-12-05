@@ -11,6 +11,22 @@ def send_booking_confirmation(booking):
 
     subject = f"Ваше бронирование подтверждено — {room.name}"
 
+    # 🏢 ОФИС
+    office = room.office
+
+    if office:
+        office_info = f"""
+🏢 Месторасположение:
+Название офиса: {office.name}
+Адрес: {office.address}
+Телефон: {office.phone or "не указан"}
+Часы работы: {office.work_hours or "не указаны"}
+Ссылка на карту: {office.yandex_map_url or "не указана"}
+"""
+    else:
+        office_info = "🏢 Месторасположение: офис не выбран\n"
+
+    # 📩 ОСНОВНОЕ ПИСЬМО
     message = f"""
 Здравствуйте, {user.first_name or user.username}!
 
@@ -19,9 +35,10 @@ def send_booking_confirmation(booking):
 📅 Дата: {start.strftime('%d.%m.%Y')}
 ⏰ Время: {start.strftime('%H:%M')} — {end.strftime('%H:%M')}
 ⏱ Длительность: {(booking.end_time - booking.start_time).seconds // 3600} часа
-🏢 Местоположение: Скоро будет указано
-💰 Итоговая стоимость: {booking.total_price} руб.
 
+{office_info}
+
+💰 Итоговая стоимость: {booking.total_price} руб.
 """
 
     if booking.description:

@@ -58,6 +58,8 @@ urlpatterns = [
     path('office-management/<int:office_id>/edit/', views.edit_office, name='edit_office'),
     path('office-management/<int:office_id>/delete/', views.delete_office, name='delete_office'),
 
+    path("api/change-role/<int:user_id>/", views.change_user_role, name="change_user_role"),
+
 
 ]
 

@@ -12,6 +12,8 @@ from datetime import datetime, timedelta
 from .models import SupportTicket, TicketResponse
 import json
 from decimal import Decimal
+
+
 @login_required
 def ticket_response_form(request, ticket_id):
     """Возвращает HTML форму для ответа на тикет"""
@@ -379,14 +381,35 @@ def info_page(request):
 
 def home(request):
     """Главная страница"""
-    if request.user.is_authenticated and request.user.role in ['admin', 'manager']:
-        # Админы и менеджеры видят все комнаты
-        rooms = Room.objects.all()
-    else:
-        # Обычные пользователи видят только активные комнаты
-        rooms = Room.objects.filter(status='active')
 
-    return render(request, 'home.html', {'rooms': rooms})
+    category = request.GET.get('category')
+    office_id = request.GET.get('office')
+
+    # Подгружаем office заранее
+    if request.user.is_authenticated and request.user.role in ['admin', 'manager']:
+        rooms = Room.objects.select_related("office").all()
+    else:
+        rooms = Room.objects.select_related("office").filter(status='active')
+
+    # Фильтр по категории
+    if category:
+        rooms = rooms.filter(category=category)
+
+    # Фильтр по офису
+    if office_id:
+        rooms = rooms.filter(office_id=office_id)
+
+    # Список офисов для фильтра
+    offices = Office.objects.filter(is_active=True)
+    categories = Room.CATEGORY_CHOICES
+
+    return render(request, 'home.html', {
+        'rooms': rooms,
+        'offices': offices,
+        'categories': categories,
+        'selected_category': category,
+        'selected_office': office_id,
+    })
 
 
 def room_detail(request, room_id):
@@ -1230,3 +1253,35 @@ def delete_office(request, office_id):
         return JsonResponse({'success': True})
     except Office.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Офис не найден'})
+
+
+@login_required
+def change_user_role(request, user_id):
+    """Смена роли пользователя — только для админов"""
+    if request.user.role != 'admin':
+        return JsonResponse({'success': False, 'error': 'Нет прав'}, status=403)
+
+    if request.method != "POST":
+        return JsonResponse({'success': False, 'error': 'Неверный метод'}, status=400)
+
+    new_role = request.POST.get("role")
+    if new_role not in ['admin', 'manager', 'user']:
+        return JsonResponse({'success': False, 'error': 'Неверная роль'}, status=400)
+
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    try:
+        user = User.objects.get(id=user_id)
+
+        # Админа другим админом менять нельзя
+        if user.role == "admin" and request.user.id != user.id:
+            return JsonResponse({'success': False, 'error': 'Нельзя изменить роль другого админа'}, status=400)
+
+        user.role = new_role
+        user.save()
+
+        return JsonResponse({'success': True})
+
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Пользователь не найден'})

@@ -236,7 +236,7 @@
                             <a href="{% url 'admin_user_profile' user.id %}" class="view-btn">
                                 👁️ Просмотр
                             </a>
-                            <button class="role-btn">
+                            <button class="role-btn" onclick="openRoleDialog({{ user.id }}, '{{ user.role }}')">
                                 ✏️ Роль
                             </button>
                             <!-- ★★★ КНОПКА УДАЛЕНИЯ ★★★ -->
@@ -342,6 +342,102 @@ function getCsrfToken() {
         document.addEventListener('DOMContentLoaded', function() {
             filterUsers();
         });
+
+
+
+function openRoleDialog(userId, currentRole) {
+    document.getElementById("roleUserId").value = userId;
+
+    // отмечаем текущую роль
+    document.querySelectorAll("input[name='newrole']").forEach(r => {
+        r.checked = (r.value === currentRole);
+    });
+
+    document.getElementById("roleModal").style.display = "flex";
+}
+
+function closeRoleModal() {
+    document.getElementById("roleModal").style.display = "none";
+}
+
+function saveRole() {
+    const userId = document.getElementById("roleUserId").value;
+    const newRole = document.querySelector("input[name='newrole']:checked");
+
+    if (!newRole) {
+        alert("Выберите роль!");
+        return;
+    }
+
+    fetch(`/api/change-role/${userId}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCsrfToken(),
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: `role=${newRole.value}`
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("✔ Роль успешно изменена!");
+            closeRoleModal();
+            location.reload();
+        } else {
+            alert("Ошибка: " + data.error);
+        }
+    })
+    .catch(err => alert("Ошибка запроса"));
+}
     </script>
+<div id="roleModal" class="modal" style="
+    display:none;
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.6);
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+">
+    <div style="
+        background:white;
+        padding:20px;
+        border-radius:10px;
+        width:300px;
+        color:black;
+        text-align:center;
+    ">
+        <h3>Изменить роль</h3>
+
+        <input type="hidden" id="roleUserId">
+
+        <div style="text-align:left; margin-top:10px;">
+
+            <label><input type="radio" name="newrole" value="admin"> admin</label><br>
+            <label><input type="radio" name="newrole" value="manager"> manager</label><br>
+            <label><input type="radio" name="newrole" value="user"> user</label>
+
+        </div>
+
+        <div style="margin-top:20px;">
+            <button onclick="saveRole()" style="
+                padding:8px 15px;
+                background:#007bff;
+                color:white;
+                border:none;
+                border-radius:5px;
+                margin-right:10px;
+            ">Сохранить</button>
+
+            <button onclick="closeRoleModal()" style="
+                padding:8px 15px;
+                background:#ccc;
+                border:none;
+                border-radius:5px;
+            ">Отмена</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
